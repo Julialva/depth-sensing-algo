@@ -1,6 +1,14 @@
 import numpy as np
 import sys
 import pyzed.sl as sl
+import cv2 
+import os
+
+def capture_mono_image(directory_path: str, timestamp: int):
+    cap = cv2.VideoCapture(0) # video capture source camera (Here webcam of laptop) 
+    ret,frame = cap.read() # return a single frame in variable `frame`
+    cv2.imwrite(os.path.join(directory_path,'cam_images','img_' + str(timestamp) + '.png'),frame)
+    cap.release()
 
 def show_image(image: np.ndarray, title: str = "Image", cmap_type: str = "gray"):
     """Display a image. This is ment for development use only
