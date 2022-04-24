@@ -50,7 +50,7 @@ def get_point_cloud()-> np.ndarray:
     status = zed.open(init)
     if status != sl.ERROR_CODE.SUCCESS:
         print(repr(status))
-        exit()
+        return "Error!"
 
     res = sl.Resolution()
     res.width = 2048
@@ -76,13 +76,20 @@ def read_point_cloud(path: str):
         arr = pickle.load(f)
     return arr
 
-def capture_image_chunk(size: int, path_mono_img: str,path_stereo: str, mono_camera_index: int):
-    for _ in range(size):
+def capture_image_batch(batch_size: int, path_mono_img: str,path_stereo: str, mono_camera_index: int):
+    capture_arr = []
+    for _ in range(batch_size):
         timestamp = int(datetime.now(tz=timezone.utc).timestamp())
         frame = capture_mono_image(mono_camera_index)
         dump_mono_image(frame, path_mono_img, timestamp)
         point_cloud = get_point_cloud()
-        dump_point_cloud(point_cloud,path_stereo,timestamp)
+
+        if isinstance(point_cloud,str):
+           capture_arr.append("Error!") # point cloud error msg
+        else:    
+            dump_point_cloud(point_cloud,path_stereo,timestamp)
+            capture_arr.append("OK!")
+    return "Done!", capture_arr
 
 def list_ports():
     """
