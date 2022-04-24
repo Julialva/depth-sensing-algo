@@ -19,7 +19,7 @@ def show_image(image: np.ndarray, title: str = "Image", cmap_type: str = "gray")
     plt.show()
 
 def get_depth()->np.ndarray:
-    """Retrieves point cloud from zed camera. 
+    """Retrieves point cloud from zed camera.
     This function requires a zed camera to be available to the machine.
 
     :return: point cloud array
