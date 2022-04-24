@@ -6,11 +6,15 @@ import os
 import pickle
 from datetime import datetime,timezone
 
-def capture_mono_image(directory_path: str, timestamp: int):
-    cap = cv2.VideoCapture(0) # video capture source camera (Here webcam of laptop) 
+def capture_mono_image(camera_index: int):
+    cap = cv2.VideoCapture(camera_index) # video capture source camera (Here webcam of laptop) 
     ret,frame = cap.read() # return a single frame in variable `frame`
-    cv2.imwrite(os.path.join(directory_path,'cam_images','img_' + str(timestamp) + '.png'),frame)
     cap.release()
+    return frame
+
+def dump_mono_image(frame, directory_path: str, timestamp: int):
+    path = f"{directory_path}/img_{timestamp}.png"
+    cv2.imwrite(path,frame)
 
 def show_image(image: np.ndarray, title: str = "Image", cmap_type: str = "gray"):
     """Display a image. This is ment for development use only
@@ -60,22 +64,26 @@ def get_point_cloud()-> np.ndarray:
     zed.close()
     return point_cloud.get_data()
 
-def dump_point_cloud(point_cloud: np.ndarray, path: str) -> None:
+def dump_point_cloud(point_cloud: np.ndarray, path: str, timestamp: int) -> None:
 
-    id = int(datetime.now(tz=timezone.utc).timestamp())
-    filename = f"{path}/point_cloud_{id}"
+    filename = f"{path}/point_cloud_{timestamp}"
     with open(filename,'wb') as f:
         pickle.dump(point_cloud, f)
-    
     return
 
-def capture_image_chunk(size=10):
-    os.chdir('../..')
-    path = os.getcwd()
+def read_point_cloud(path: str):
+    with open(path,'rb') as f: 
+        arr = pickle.load(f)
+    return arr
+
+def capture_image_chunk(size: int, path_mono_img: str,path_stereo: str, mono_camera_index: int):
     for _ in range(size):
         timestamp = int(datetime.now(tz=timezone.utc).timestamp())
-        capture_mono_image(path, timestamp)
-        
+        frame = capture_mono_image(mono_camera_index)
+        dump_mono_image(frame, path_mono_img, timestamp)
+        point_cloud = get_point_cloud()
+        dump_point_cloud(point_cloud,path_stereo,timestamp)
+
 def list_ports():
     """
     Test the ports and returns a tuple with the available ports and the ones that are working.
