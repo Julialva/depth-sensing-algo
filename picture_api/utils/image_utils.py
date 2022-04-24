@@ -3,6 +3,8 @@ import sys
 import pyzed.sl as sl
 import cv2 
 import os
+import pickle
+from datetime import datetime,timezone
 
 def capture_mono_image(directory_path: str, timestamp: int):
     cap = cv2.VideoCapture(0) # video capture source camera (Here webcam of laptop) 
@@ -26,7 +28,7 @@ def show_image(image: np.ndarray, title: str = "Image", cmap_type: str = "gray")
     plt.axis("off")
     plt.show()
 
-def get_depth()->np.ndarray:
+def get_point_cloud()-> np.ndarray:
     """Retrieves point cloud from zed camera.
     This function requires a zed camera to be available to the machine.
 
@@ -57,3 +59,45 @@ def get_depth()->np.ndarray:
         zed.retrieve_measure(point_cloud, sl.MEASURE.XYZRGBA,sl.MEM.CPU, res)
     zed.close()
     return point_cloud.get_data()
+
+def dump_point_cloud(point_cloud: np.ndarray, path: str) -> None:
+
+    id = int(datetime.now(tz=timezone.utc).timestamp())
+    filename = f"{path}/point_cloud_{id}"
+    with open(filename,'wb') as f:
+        pickle.dump(point_cloud, f)
+    
+    return
+
+def capture_image_chunk(size=10):
+    os.chdir('../..')
+    path = os.getcwd()
+    for _ in range(size):
+        timestamp = int(datetime.now(tz=timezone.utc).timestamp())
+        capture_mono_image(path, timestamp)
+        
+def list_ports():
+    """
+    Test the ports and returns a tuple with the available ports and the ones that are working.
+    """
+    non_working_ports = []
+    dev_port = 0
+    working_ports = []
+    available_ports = []
+    while len(non_working_ports) < 6: # if there are more than 5 non working ports stop the testing. 
+        camera = cv2.VideoCapture(dev_port)
+        if not camera.isOpened():
+            non_working_ports.append(dev_port)
+            print("Port %s is not working." %dev_port)
+        else:
+            is_reading, img = camera.read()
+            w = camera.get(3)
+            h = camera.get(4)
+            if is_reading:
+                print("Port %s is working and reads images (%s x %s)" %(dev_port,h,w))
+                working_ports.append(dev_port)
+            else:
+                print("Port %s for camera ( %s x %s) is present but does not reads." %(dev_port,h,w))
+                available_ports.append(dev_port)
+        dev_port +=1
+    return available_ports,working_ports,non_working_ports
