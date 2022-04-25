@@ -1,0 +1,14 @@
+<h4>Hello, you are using picture-api!</h4>
+<form method="POST">
+    <label for="batchSize">Batch Size:</label><br>
+    <input type="number" id="batchSize" name="batchSize"><br>
+    <br><label for="camIndex">Camera Index:</label><br>
+    <input type="number" id="camIndex" name="camIndex"><br>
+    <br><input type="submit" value="Capture Images!">
+</form>
+<h4>Batch status</h4>
+<ol>
+{% for element in arr %}
+    <li>{{ element }} </li>
+{% endfor %}
+</ol>
