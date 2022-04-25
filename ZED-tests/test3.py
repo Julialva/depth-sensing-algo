@@ -24,12 +24,15 @@ from signal import signal, SIGINT
 
 cam = sl.Camera()
 
+
 def handler(signal_received, frame):
     cam.disable_recording()
     cam.close()
     sys.exit(0)
 
+
 signal(SIGINT, handler)
+
 
 def main():
     if not sys.argv or len(sys.argv) != 2:
@@ -46,7 +49,8 @@ def main():
         exit(1)
 
     path_output = sys.argv[1]
-    recording_param = sl.RecordingParameters(path_output, sl.SVO_COMPRESSION_MODE.H264)
+    recording_param = sl.RecordingParameters(
+        path_output, sl.SVO_COMPRESSION_MODE.H264)
     err = cam.enable_recording(recording_param)
     if err != sl.ERROR_CODE.SUCCESS:
         print(repr(status))
@@ -57,9 +61,10 @@ def main():
     frames_recorded = 0
 
     while True:
-        if cam.grab(runtime) == sl.ERROR_CODE.SUCCESS :
+        if cam.grab(runtime) == sl.ERROR_CODE.SUCCESS:
             frames_recorded += 1
             print("Frame count: " + str(frames_recorded), end="\r")
+
 
 if __name__ == "__main__":
     main()
