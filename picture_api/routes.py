@@ -15,5 +15,4 @@ def capture_images():
     return controllers.capture_images()
 
 
-if __name__ == '__main__':
-    app.run(port='5000')
+
