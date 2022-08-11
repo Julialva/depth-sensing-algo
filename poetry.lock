@@ -237,25 +237,6 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
 six = ">=1.5"
 
 [[package]]
-name = "pyzed"
-version = "3.7"
-description = "Use the ZED SDK with Python"
-category = "main"
-optional = false
-python-versions = ">=3.6"
-
-[package.dependencies]
-cython = ">=0.28"
-numpy = ">=1.13"
-
-[package.extras]
-sample = ["opencv-python", "pyopengl"]
-
-[package.source]
-type = "file"
-url = "../../../usr/local/zed/pyzed-3.7-cp39-cp39-linux_x86_64.whl"
-
-[[package]]
 name = "setuptools-scm"
 version = "6.4.2"
 description = "the blessed package to manage your versions by scm tags"

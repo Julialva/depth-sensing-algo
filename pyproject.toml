@@ -8,7 +8,6 @@ authors = ["julialva <julio.alvarez@neofield.com.br>"]
 python = "^3.9"
 Flask = "^2.1.1"
 opencv-python = "^4.5.5"
-pyzed = { file = "/usr/local/zed/pyzed-3.7-cp39-cp39-linux_x86_64.whl" }
 autopep8 = "^1.6.0"
 
 [tool.poetry.dev-dependencies]

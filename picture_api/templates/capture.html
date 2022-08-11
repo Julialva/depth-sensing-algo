@@ -1,9 +1,12 @@
 <h4>Hello, you are using picture-api!</h4>
+<div>
 <form method="POST">
     <label for="batchSize">Batch Size:</label><br>
-    <input type="number" id="batchSize" name="batchSize"><br>
-    <br><label for="camIndex">Camera Index:</label><br>
-    <input type="number" id="camIndex" name="camIndex"><br>
+    <input required type="number" id="batchSize" name="batchSize"><br>
+    <br><label for="camIndexLeft">Camera Index Left:</label><br>
+    <input required type="number" id="camIndexLeft" name="camIndexLeft"><br>
+    <br><label for="camIndexRight">Camera Index Right:</label><br>
+    <input required type="number" id="camIndexRight" name="camIndexRight"><br>
     <br><input type="submit" value="Capture Images!">
 </form>
 <h4>Batch status</h4>
@@ -12,3 +15,4 @@
     <li>{{ element }} </li>
 {% endfor %}
 </ol>
+</div>

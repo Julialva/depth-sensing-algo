@@ -6,9 +6,10 @@ from flask import Flask
 def capture_images():
     data = request.args
     batch_size = int(data.get("batchSize", 10))
-    mono_camera_index = int(data.get("camIndex", 2))
+    mono_camera_index_left = int(data.get("camIndexLeft", 1))
+    mono_camera_index_right = int(data.get("camIndexRight", 2))
     status, capure_arr = capture_image_batch(
-        batch_size, "./mono_camera_images", "./point_cloud", mono_camera_index)
+        batch_size, "./left", "./right", mono_camera_index_left, mono_camera_index_right)
     return make_response(jsonify({'status': status,
                                   "statusArray": capure_arr}), 200)
 
@@ -17,9 +18,10 @@ def index():
     data = request.form
     if request.method == 'POST':
         batch_size = int(data.get("batchSize", 10))
-        mono_camera_index = int(data.get("camIndex", 2))
+        mono_camera_index_left = int(data.get("camIndexLeft", 1))
+        mono_camera_index_right = int(data.get("camIndexRight", 2))
         status, capure_arr = capture_image_batch(
-            batch_size, "./mono_camera_images", "./point_cloud", mono_camera_index)
+            batch_size, "./left", "./right", mono_camera_index_left, mono_camera_index_right)
         return render_template('capture.html',
                                form=request.form,
                                arr=capure_arr,

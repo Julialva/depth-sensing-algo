@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import pickle
 from datetime import datetime, timezone
+from time import sleep
 
 
 def capture_mono_image(camera_index: int):
@@ -49,15 +50,24 @@ def read_point_cloud(path: str):
 
 
 def capture_image_batch(batch_size: int,
-                        path_mono_img: str,
-                        path_stereo: str,
-                        mono_camera_index: int):
+                        path_left: str,
+                        path_right: str,
+                        mono_camera_index_left: int,
+                        mono_camera_index_right: int):
     capture_arr = []
     for _ in range(batch_size):
         timestamp = int(datetime.now(tz=timezone.utc).timestamp())
-        frame = capture_mono_image(mono_camera_index)
-        dump_mono_image(frame, path_mono_img, timestamp)
-        capture_arr.append("OK!")
+        try:
+            frame_left = capture_mono_image(mono_camera_index_left)
+            sleep(0.5)
+            frame_right = capture_mono_image(mono_camera_index_right)
+            sleep(0.5)
+            dump_mono_image(frame_left, path_left, timestamp)
+            dump_mono_image(frame_right, path_right, timestamp)
+        except:
+            capture_arr.append("ERROR!") 
+        else:  
+            capture_arr.append("OK!")
     return "Done!", capture_arr
 
 

@@ -1,3 +1,4 @@
-from picture_api.utils import app
+from picture_api import run_app
 
-app.run(port='5000')
+run_app()
+
