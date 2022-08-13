@@ -3,11 +3,12 @@ import cv2
 import pickle
 from datetime import datetime, timezone
 from time import sleep
-
+from os import listdir
+from os.path import isfile, join
 
 def capture_mono_image(camera_index: int):
     # video capture source camera (Here webcam of laptop)
-    cap = cv2.VideoCapture(camera_index)
+    cap = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)
     ret, frame = cap.read()  # return a single frame in variable `frame`
     cap.release()
     return frame
@@ -91,13 +92,28 @@ def list_ports():
             w = camera.get(3)
             h = camera.get(4)
             if is_reading:
-                print("Port %s is working and reads images (%s x %s)" %
-                      (dev_port, h, w))
+                print(f"Port {dev_port} for camera ({h} x {w})")
                 working_ports.append(dev_port)
             else:
-                print("Port % s for camera ( % s x % s)" +
-                      "is present but does not reads." % (
-                          dev_port, h, w))
+                print(f"Port {dev_port} for camera ({h} x {w})" +
+                      " is present but does not reads.")
                 available_ports.append(dev_port)
         dev_port += 1
     return available_ports, working_ports, non_working_ports
+
+def list_dir(dir_name:str='/', prefix:str='img_', number:bool=True):
+    onlyfiles = [f[len(prefix):] for f in listdir(dir_name) if isfile(join(dir_name, f))]
+    onlyfiles_names = [i.split('.')[0] for i in onlyfiles]
+    onlyfiles_exts = [('.' + i.split('.')[1]) for i in onlyfiles]
+    if len(onlyfiles) > 0:
+        if number:
+            inted =[int(x) for x in onlyfiles_names]
+        inted.sort()
+        return (f"{prefix}{str(inted[-1])}{onlyfiles_exts[-1]}")
+    else:
+        return ''
+
+def find_last_images(left_dir:str, right_dir:str):
+    last_left_image = list_dir(left_dir)
+    last_right_image = list_dir(right_dir)
+    return last_left_image, last_right_image

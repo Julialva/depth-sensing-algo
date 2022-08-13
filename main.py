@@ -1,4 +1,4 @@
-from picture_api import run_app
+from picture_api import app
 
-run_app()
+app.run(port='5000',debug=True)
 
