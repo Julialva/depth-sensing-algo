@@ -1,0 +1,1 @@
+cd cp `ls | head -4` ./left/
