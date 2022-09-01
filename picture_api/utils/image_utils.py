@@ -57,6 +57,12 @@ def capture_image_batch(batch_size: int,
                         mono_camera_index_left: int,
                         mono_camera_index_right: int):
     capture_arr = []
+    cap_left = cv2.VideoCapture(mono_camera_index_left, cv2.CAP_DSHOW)
+    cap_left.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+    cap_left.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+    cap_right = cv2.VideoCapture(mono_camera_index_left, cv2.CAP_DSHOW)
+    cap_right.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+    cap_right.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
     for _ in range(batch_size):
         timestamp = int(datetime.now(tz=timezone.utc).timestamp())
         try:
