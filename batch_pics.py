@@ -27,8 +27,8 @@ def picture_loop(camLeft,camRight,loop_size):
             retRight, frameRight = camRight.read()
             framesLeft.append(frameLeft)
             framesRight.append(frameRight)
-            pathsLeft.append(f'left/left_{timestamp}.png')
-            pathsRight.append(f'right/right_{timestamp}.png')
+            pathsLeft.append(f'left_batch/left_{timestamp}.png')
+            pathsRight.append(f'right_batch/right_{timestamp}.png')
         for i in range(loop_size):
             cv2.imwrite(pathsLeft[i], framesLeft[i])
             cv2.imwrite(pathsRight[i], framesRight[i])
