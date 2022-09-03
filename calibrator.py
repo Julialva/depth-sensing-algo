@@ -22,7 +22,7 @@ def calibrate(frame_size:tuple=(640,360),chessboard_size:tuple=(8,6),image_dir:s
     for fname in images:
         img = cv2.imread(fname)
         gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-        show_image(img)
+        #show_image(img)
         #show_image(gray)
         # Find the chess board corners
         ret, corners = cv2.findChessboardCorners(gray, chessboard_size,cv2.CALIB_CB_ADAPTIVE_THRESH+cv2.CALIB_CB_FAST_CHECK+cv2.CALIB_CB_NORMALIZE_IMAGE)
@@ -35,9 +35,9 @@ def calibrate(frame_size:tuple=(640,360),chessboard_size:tuple=(8,6),image_dir:s
             imgpoints.append(corners)
 
             # Draw and display the corners
-            cv2.drawChessboardCorners(img, chessboard_size, corners,ret)
-            cv2.imshow('img',img)
-            cv2.waitKey(500)
+            #cv2.drawChessboardCorners(img, chessboard_size, corners,ret)
+            #cv2.imshow('img',img)
+            #cv2.waitKey(500)
         else:
             raise "ImageError: Chessboard not found."
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1],None,None)
@@ -47,8 +47,8 @@ def calibrate(frame_size:tuple=(640,360),chessboard_size:tuple=(8,6),image_dir:s
 
 
 if __name__ =="__main__":
-    ret, mtx, dist, rvecs, tvecs = calibrate(image_dir='calib/left_cal/*.png')
-    img = cv2.imread('calib/left_cal/left_1661541496771964700.png')
+    ret, mtx, dist, rvecs, tvecs = calibrate(image_dir='calib/right_cal/*.png')
+    img = cv2.imread('calib/right_cal/right_1661541497272835700.png')
     h,  w = img.shape[:2]
     newcameramtx, roi=cv2.getOptimalNewCameraMatrix(mtx,dist,(w,h),1,(w,h))
     # undistort
