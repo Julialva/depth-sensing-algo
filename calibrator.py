@@ -47,8 +47,8 @@ def calibrate(frame_size:tuple=(640,360),chessboard_size:tuple=(8,6),image_dir:s
 
 
 if __name__ =="__main__":
-    ret, mtx, dist, rvecs, tvecs = calibrate(image_dir='calib/right_cal/*.png')
-    img = cv2.imread('calib/right_cal/right_1661541497272835700.png')
+    ret, mtx, dist, rvecs, tvecs = calibrate(image_dir='calib/right_cal/*.jpeg')
+    img = cv2.imread('calib/right_cal/right_1661541497272835700.jpeg')
     h,  w = img.shape[:2]
     newcameramtx, roi=cv2.getOptimalNewCameraMatrix(mtx,dist,(w,h),1,(w,h))
     # undistort
@@ -58,4 +58,4 @@ if __name__ =="__main__":
     dst = dst[y:y+h, x:x+w]
     show_image(dst)
     cv2.imshow('img',img)
-    cv2.imwrite('calibresult.png',dst)
+    cv2.imwrite('calibresult.jpeg',dst)
