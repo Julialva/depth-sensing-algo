@@ -19,6 +19,7 @@ Apresentar a solução de um problema de visão estéreo usando uma RNA.
 ### Importação das principais bibliotecas
 """
 
+import pandas as pd
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras import optimizers
 from tensorflow.keras import models
@@ -33,7 +34,7 @@ from glob import glob
 import os
 import logging
 from keras.preprocessing.image import load_img, img_to_array
-from calibrator import calibrate
+from calibrator import calibrate, undistort
 
 logging.basicConfig(
     format='%(asctime)s - %(funcName)s - %(levelname)s: %(message)s', datefmt='%d-%b-%y %H:%M:%S')
@@ -52,7 +53,7 @@ A célula abaixo instala o `gdown` para carregar um arquivo que está no Google 
 """
 
 
-local_zip = '/content/images_colab.zip'
+local_zip = '/content/images_stereo.zip'
 
 zip_ref = zipfile.ZipFile(local_zip, 'r')
 
@@ -79,7 +80,10 @@ glob_right_imgs = os.path.join(right_image_path, '*.png')
 # Cria lista dos nomes dos arquivos
 left_img_paths = glob(glob_left_imgs)
 right_img_paths = glob(glob_right_imgs)
-
+ret_r, mtx_r, dist_r, rvecs_r, tvecs_r = calibrate(
+    image_dir='calib/right_cal/*.jpeg')
+ret_l, mtx_l, dist_l, rvecs_l, tvecs_l = calibrate(
+    image_dir='calib/left_cal/*.jpeg')
 
 # Ordena lista dos arquivos
 left_img_paths.sort()
@@ -156,6 +160,10 @@ def batch_generator(left_img_paths, right_img_paths, img_size, m_exemplos, batch
                 # Converet para tensor
                 left_imagem = img_to_array(left_imagem)
                 right_imagem = img_to_array(right_imagem)
+                right_imagem = undistort(
+                    ret_r, mtx_r, dist_r, rvecs_r, tvecs_r, (640, 360), right_imagem)
+                left_imagem = undistort(
+                    ret_l, mtx_l, dist_l, rvecs_l, tvecs_l, (640, 360), left_imagem)
                 disp_imagem = np.zeros(img_size)
 
                 # Elimina 4o canal
@@ -483,7 +491,7 @@ Após o término do processo de treinamento a rede e os seus parâmetros são sa
 # Restore the weights
 # 'my_checkpoint_classic')
 rna_stereo.load_weights('rna_stereo_CVN_REC_weigths')
-
+rna_stereo.save("rna_stereo.h5")
 """### 4.4 Resultados
 
 As células abaixo apresentam os gráficos do processo de treinamento e a avaliação da rede pelo cálculo da função de custo e métrica para os dados de treinamento e validação.
@@ -491,3 +499,7 @@ As células abaixo apresentam os gráficos do processo de treinamento e a avalia
 
 # Obtém dicionário com os resultados do treinamento
 results_dict = results.history
+df_hist = pd.DataFrame(results_dict)
+hist_json_file = 'history.json'
+with open(hist_json_file, mode='w') as f:
+    df_hist.to_json(f)

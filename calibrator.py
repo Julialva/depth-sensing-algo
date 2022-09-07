@@ -48,8 +48,6 @@ def calibrate(frame_size: tuple = (640, 360), chessboard_size: tuple = (8, 6), i
                 objpoints, imgpoints, gray.shape[::-1], None, None)
     return ret, mtx, dist, rvecs, tvecs
     # cv2.destroyAllWindows()
-
-
 def undistort(ret, mtx, dist, rvecs, tvecs, img_size, img):
     newcameramtx, roi = cv2.getOptimalNewCameraMatrix(
         mtx, dist, img_size, 1, img_size)
@@ -60,8 +58,8 @@ def undistort(ret, mtx, dist, rvecs, tvecs, img_size, img):
 
 
 if __name__ == "__main__":
-    ret, mtx, dist, rvecs, tvecs = calibrate(image_dir='calibration/right_cal/*.png')
-    img = cv2.imread('calibration/right_cal/right_1661541497272835700.jpeg')
+    ret, mtx, dist, rvecs, tvecs = calibrate(image_dir='calib/right_cal/*.jpeg')
+    img = cv2.imread('calib/right_cal/right_1661541497272835700.jpeg')
 
-    dst=undistort(ret, mtx, dist, rvecs, tvecs, (360, 640), img)
+    dst=undistort(ret, mtx, dist, rvecs, tvecs, (640, 360), img)
     show_image(dst)
