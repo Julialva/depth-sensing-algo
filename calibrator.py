@@ -1,8 +1,7 @@
 import numpy as np
 import cv2
 import glob
-import os
-from picture_api.utils.image_utils import show_image
+#from picture_api.utils.image_utils import show_image
 
 
 def calibrate(frame_size: tuple = (640, 360), chessboard_size: tuple = (8, 6), image_dir: str = ''):
@@ -62,4 +61,4 @@ if __name__ == "__main__":
     img = cv2.imread('calib/right_cal/right_1661541497272835700.jpeg')
 
     dst=undistort(ret, mtx, dist, rvecs, tvecs, (640, 360), img)
-    show_image(dst)
+    #show_image(dst)
