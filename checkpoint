@@ -1,0 +1,2 @@
+model_checkpoint_path: "rna_stereo_CVN_REC_weigths"
+all_model_checkpoint_paths: "rna_stereo_CVN_REC_weigths"

@@ -18,20 +18,10 @@ logging.basicConfig(level=logging.INFO,
     format='%(asctime)s - %(funcName)s - %(levelname)s: %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 logging.info(f"done importing... tf version:{tf.__version__}")
 logging.info(f"{tf.config.list_physical_devices('GPU')}")
-
-
-local_zip = 'Final_pics.zip'
-
-zip_ref = zipfile.ZipFile(local_zip, 'r')
-
-zip_ref.extractall()
-zip_ref.close()
-logging.info("extracted zip...")
-
-
+local_zip="Final_pics"
 # Define diretório onde se encontram as imagens
-left_image_path = './final_pics/left'
-right_image_path = './final_pics/right'
+left_image_path = f'./{local_zip}/left'
+right_image_path = f'./{local_zip}/right'
 
 
 # Escolhe tipos de arquivos desejados
@@ -400,7 +390,7 @@ results = rna_stereo.fit(
     batch_generator(train_left_img_paths, train_right_img_paths,
                     img_size, m_train, batchsize=batch_size),
     steps_per_epoch=train_steps,
-    epochs=100,
+    epochs=1,
     validation_data=batch_generator(
         val_left_img_paths, val_right_img_paths, img_size, m_val, batchsize=batch_size),
     validation_steps=val_steps,
