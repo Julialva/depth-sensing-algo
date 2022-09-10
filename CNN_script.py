@@ -52,8 +52,8 @@ left_img_paths.sort()
 right_img_paths.sort()
 
 # Apresenta numero de imagens
-logging.info('Número de imagens da esquerda:', len(left_img_paths))
-logging.info('Número de imagens da direita:', len(right_img_paths))
+logging.info(f'Número de imagens da esquerda: {len(left_img_paths)}')
+logging.info(f'Número de imagens da direita: {len(right_img_paths)}')
 
 # Imprime nomes e paths dos 5 primeiros arquivos das listas
 logging.info('Nomes dos 5 primeiros arquivos das listas:')
