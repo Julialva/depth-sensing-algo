@@ -2,7 +2,6 @@ import pandas as pd
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras import optimizers
 from tensorflow.keras import models
-import zipfile
 from sklearn.utils import shuffle
 import numpy as np
 import tensorflow as tf
@@ -18,15 +17,6 @@ logging.basicConfig(level=logging.INFO,
     format='%(asctime)s - %(funcName)s - %(levelname)s: %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 logging.info(f"done importing... tf version:{tf.__version__}")
 logging.info(f"{tf.config.list_physical_devices('GPU')}")
-
-
-local_zip = 'Final_pics.zip'
-
-zip_ref = zipfile.ZipFile(local_zip, 'r')
-
-zip_ref.extractall()
-zip_ref.close()
-logging.info("extracted zip...")
 
 
 # Define diretório onde se encontram as imagens
