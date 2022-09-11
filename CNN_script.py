@@ -390,7 +390,7 @@ results = rna_stereo.fit(
     batch_generator(train_left_img_paths, train_right_img_paths,
                     img_size, m_train, batchsize=batch_size),
     steps_per_epoch=train_steps,
-    epochs=1,
+    epochs=100,
     validation_data=batch_generator(
         val_left_img_paths, val_right_img_paths, img_size, m_val, batchsize=batch_size),
     validation_steps=val_steps,
