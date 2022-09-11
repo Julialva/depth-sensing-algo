@@ -11,9 +11,13 @@ opencv-python = "^4.5.5"
 autopep8 = "^1.6.0"
 pandas = "^1.4.4"
 gdown = "^4.5.1"
+keras = "^2.10.0"
+tensorflow = "^2.10.0"
+scikit-learn = "^1.1.2"
 
 [tool.poetry.dev-dependencies]
 matplotlib = "^3.5.1"
+ipykernel = "^6.15.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
