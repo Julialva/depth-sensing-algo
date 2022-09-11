@@ -2,7 +2,6 @@ import pandas as pd
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras import optimizers
 from tensorflow.keras import models
-import zipfile
 from sklearn.utils import shuffle
 import numpy as np
 import tensorflow as tf
@@ -18,10 +17,11 @@ logging.basicConfig(level=logging.INFO,
     format='%(asctime)s - %(funcName)s - %(levelname)s: %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 logging.info(f"done importing... tf version:{tf.__version__}")
 logging.info(f"{tf.config.list_physical_devices('GPU')}")
-local_zip="Final_pics"
+
+Zipname='Final_pics.zip'
 # Define diretório onde se encontram as imagens
-left_image_path = f'./{local_zip}/left'
-right_image_path = f'./{local_zip}/right'
+left_image_path = f'./{Zipname}/left'
+right_image_path = f'./{Zipname}/right'
 
 
 # Escolhe tipos de arquivos desejados
@@ -42,8 +42,8 @@ left_img_paths.sort()
 right_img_paths.sort()
 
 # Apresenta numero de imagens
-logging.info('Número de imagens da esquerda:', len(left_img_paths))
-logging.info('Número de imagens da direita:', len(right_img_paths))
+logging.info(f'Número de imagens da esquerda: {len(left_img_paths)}')
+logging.info(f'Número de imagens da direita: {len(right_img_paths)}')
 
 # Imprime nomes e paths dos 5 primeiros arquivos das listas
 logging.info('Nomes dos 5 primeiros arquivos das listas:')
@@ -123,7 +123,7 @@ m_train = len(train_left_img_paths)
 m_val = len(val_left_img_paths)
 
 # Define tamanho do lote
-batch_size = 16
+batch_size = 256
 
 # Dimensão desejada para as imagens
 img_size = (360, 640)
@@ -352,22 +352,24 @@ disp = disp_layer(x5)
 
 # Imagem da direita reconstruída usando a imagem esquerda e a disparidade
 img_rec = rec(input_left, disp)
-
+strategy = tf.distribute.MirroredStrategy()
+print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
 # Create the Keras model.
-rna_stereo = keras.Model(
-    inputs=[input_left, input_right], outputs=[img_rec, disp])
+with strategy.scope():
+    rna_stereo = keras.Model(
+        inputs=[input_left, input_right], outputs=[img_rec, disp])
 
 
-img_rec = rna_stereo([left_img_batch, right_img_batch])
+    img_rec = rna_stereo([left_img_batch, right_img_batch])
 
 
 # Importa classe dos otimizadores
 
 # Define otimizador Adam
-adam = optimizers.Adam(learning_rate=0.001, decay=1e-03)
+    adam = optimizers.Adam(learning_rate=0.001, decay=1e-03)
 
 # Compilação do autoencoder
-rna_stereo.compile(optimizer=adam,
+    rna_stereo.compile(optimizer=adam,
                    loss={
                        'rec_img': loss_erro_rec,
                        'disp': 'mse'},
@@ -390,7 +392,7 @@ results = rna_stereo.fit(
     batch_generator(train_left_img_paths, train_right_img_paths,
                     img_size, m_train, batchsize=batch_size),
     steps_per_epoch=train_steps,
-    epochs=100,
+    epochs=4,
     validation_data=batch_generator(
         val_left_img_paths, val_right_img_paths, img_size, m_val, batchsize=batch_size),
     validation_steps=val_steps,
