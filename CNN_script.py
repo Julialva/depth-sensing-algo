@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO,
 logging.info(f"done importing... tf version:{tf.__version__}")
 logging.info(f"{tf.config.list_physical_devices('GPU')}")
 
-Zipname='Final_pics.zip'
+Zipname='Final_pics'
 # Define diretório onde se encontram as imagens
 left_image_path = f'./{Zipname}/left'
 right_image_path = f'./{Zipname}/right'
