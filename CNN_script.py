@@ -352,22 +352,24 @@ disp = disp_layer(x5)
 
 # Imagem da direita reconstruída usando a imagem esquerda e a disparidade
 img_rec = rec(input_left, disp)
-
+strategy = tf.distribute.MirroredStrategy()
+print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
 # Create the Keras model.
-rna_stereo = keras.Model(
-    inputs=[input_left, input_right], outputs=[img_rec, disp])
+with strategy.scope():
+    rna_stereo = keras.Model(
+        inputs=[input_left, input_right], outputs=[img_rec, disp])
 
 
-img_rec = rna_stereo([left_img_batch, right_img_batch])
+    img_rec = rna_stereo([left_img_batch, right_img_batch])
 
 
 # Importa classe dos otimizadores
 
 # Define otimizador Adam
-adam = optimizers.Adam(learning_rate=0.001, decay=1e-03)
+    adam = optimizers.Adam(learning_rate=0.001, decay=1e-03)
 
 # Compilação do autoencoder
-rna_stereo.compile(optimizer=adam,
+    rna_stereo.compile(optimizer=adam,
                    loss={
                        'rec_img': loss_erro_rec,
                        'disp': 'mse'},
