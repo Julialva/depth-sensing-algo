@@ -307,64 +307,60 @@ def rna_carac(input_shape, nF):
 
     return rna_carac
 
+def create_final():
+    input_shape = (360, 640, 3)
+    rnaCV = rna_carac(input_shape, nF)
 
-input_shape = (360, 640, 3)
-rnaCV = rna_carac(input_shape, nF)
+    rnaCV.summary()
 
-rnaCV.summary()
+    img_carac = rnaCV(left_img_batch)
 
-img_carac = rnaCV(left_img_batch)
+    """## Rede completa"""
 
-"""## Rede completa"""
+    #### Rede de calculo da profundidade ####
+    input_shape = (img_size[0], img_size[1], 3)
 
-#### Rede de calculo da profundidade ####
-input_shape = (img_size[0], img_size[1], 3)
-
-# Define entradas
-input_left = tf.keras.layers.Input(shape=input_shape)
-input_right = tf.keras.layers.Input(shape=input_shape)
+    # Define entradas
+    input_left = tf.keras.layers.Input(shape=input_shape)
+    input_right = tf.keras.layers.Input(shape=input_shape)
 
 # Extrai características
-xL = rnaCV(input_left)
-xR = rnaCV(input_right)
+    xL = rnaCV(input_left)
+    xR = rnaCV(input_right)
 
 # Cocatena com características
-ac = layers.Concatenate(axis=-1)([xL, xR])
+    ac = layers.Concatenate(axis=-1)([xL, xR])
 
 # Aplica convolução
-x2 = layers.Conv2DTranspose(
+    x2 = layers.Conv2DTranspose(
     64, (3, 3), padding='same', activation='relu', strides=(2, 2))(ac)
-x2 = layers.Conv2D(64, (3, 3), padding='same', activation='relu')(x2)
+    x2 = layers.Conv2D(64, (3, 3), padding='same', activation='relu')(x2)
 
-x3 = layers.Conv2DTranspose(
+    x3 = layers.Conv2DTranspose(
     32, (3, 3), padding='same', activation='relu', strides=(2, 2))(x2)
-x3 = layers.Conv2D(32, (3, 3), padding='same', activation='relu')(x3)
+    x3 = layers.Conv2D(32, (3, 3), padding='same', activation='relu')(x3)
 
 # Calcula da disparidade
-x4 = layers.Conv2DTranspose(
+    x4 = layers.Conv2DTranspose(
     16, (3, 3), padding='same', activation='relu', strides=(2, 2))(x3)
-x4 = layers.Conv2D(16, (3, 3), padding='same', activation='relu')(x4)
+    x4 = layers.Conv2D(16, (3, 3), padding='same', activation='relu')(x4)
 
-x5 = layers.Conv2D(1, (1, 1), padding='same', activation='relu')(x4)
+    x5 = layers.Conv2D(1, (1, 1), padding='same', activation='relu')(x4)
 
-disp_layer = layers.Lambda(lambda x: tf.squeeze(x), name='disp')
-disp = disp_layer(x5)
+    disp_layer = layers.Lambda(lambda x: tf.squeeze(x), name='disp')
+    disp = disp_layer(x5)
 
 # Imagem da direita reconstruída usando a imagem esquerda e a disparidade
-img_rec = rec(input_left, disp)
-strategy = tf.distribute.MirroredStrategy()
-print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
-# Create the Keras model.
-with strategy.scope():
+    img_rec = rec(input_left, disp)
     rna_stereo = keras.Model(
         inputs=[input_left, input_right], outputs=[img_rec, disp])
-
-
-    img_rec = rna_stereo([left_img_batch, right_img_batch])
-
-
+    return rna_stereo
+strategy = tf.distribute.MirroredStrategy()
+print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
+    # Create the Keras model.
+with strategy.scope():
 # Importa classe dos otimizadores
-
+    rna_stereo = create_final()
 # Define otimizador Adam
     adam = optimizers.Adam(learning_rate=0.001, decay=1e-03)
 
