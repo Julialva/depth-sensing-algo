@@ -17,11 +17,10 @@ logging.basicConfig(level=logging.INFO,
     format='%(asctime)s - %(funcName)s - %(levelname)s: %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 logging.info(f"done importing... tf version:{tf.__version__}")
 logging.info(f"{tf.config.list_physical_devices('GPU')}")
-
-
+local_zip="Final_pics"
 # Define diretório onde se encontram as imagens
-left_image_path = './final_pics/left'
-right_image_path = './final_pics/right'
+left_image_path = f'./{local_zip}/left'
+right_image_path = f'./{local_zip}/right'
 
 
 # Escolhe tipos de arquivos desejados
