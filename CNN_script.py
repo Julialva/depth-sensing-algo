@@ -18,10 +18,10 @@ logging.basicConfig(level=logging.INFO,
 logging.info(f"done importing... tf version:{tf.__version__}")
 logging.info(f"{tf.config.list_physical_devices('GPU')}")
 
-
+Zipname='Final_pics.zip'
 # Define diretório onde se encontram as imagens
-left_image_path = './final_pics/left'
-right_image_path = './final_pics/right'
+left_image_path = f'./{Zipname}/left'
+right_image_path = f'./{Zipname}/right'
 
 
 # Escolhe tipos de arquivos desejados
@@ -123,7 +123,7 @@ m_train = len(train_left_img_paths)
 m_val = len(val_left_img_paths)
 
 # Define tamanho do lote
-batch_size = 16
+batch_size = 256
 
 # Dimensão desejada para as imagens
 img_size = (360, 640)
@@ -392,7 +392,7 @@ results = rna_stereo.fit(
     batch_generator(train_left_img_paths, train_right_img_paths,
                     img_size, m_train, batchsize=batch_size),
     steps_per_epoch=train_steps,
-    epochs=100,
+    epochs=4,
     validation_data=batch_generator(
         val_left_img_paths, val_right_img_paths, img_size, m_val, batchsize=batch_size),
     validation_steps=val_steps,
