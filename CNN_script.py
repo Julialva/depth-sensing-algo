@@ -123,7 +123,7 @@ m_train = len(train_left_img_paths)
 m_val = len(val_left_img_paths)
 
 # Define tamanho do lote
-batch_size = 256
+batch_size = 128
 
 # Dimensão desejada para as imagens
 img_size = (360, 640)
@@ -388,7 +388,7 @@ results = rna_stereo.fit(
     batch_generator(train_left_img_paths, train_right_img_paths,
                     img_size, m_train, batchsize=batch_size),
     steps_per_epoch=train_steps,
-    epochs=4,
+    epochs=250,
     validation_data=batch_generator(
         val_left_img_paths, val_right_img_paths, img_size, m_val, batchsize=batch_size),
     validation_steps=val_steps,
