@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO,
 logging.info(f"done importing... tf version:{tf.__version__}")
 logging.info(f"{tf.config.list_physical_devices('GPU')}")
 
-Zipname='pics/Final_pics/Final_pics'
+Zipname='Final_pics'
 # Define diretório onde se encontram as imagens
 left_image_path = f'./{Zipname}/left'
 right_image_path = f'./{Zipname}/right'
@@ -354,8 +354,7 @@ with strategy.scope():
 def make_dataset(generator_func,params):
      # Get amount of files
 
-    ds = tf.data.Dataset.from_generator(generator_func, args=params,output_signature=(tf.TensorSpec([None, 360, 640, 3], tf.float32))) # Make a dataset from the generator. MAKE SURE TO SPECIFY THE DATA TYPE!!!
-
+    ds =tf.data.Dataset.from_generator(generator_func, args=params,output_signature=(tf.TensorSpec([128,360, 640],tf.float32),tf.TensorSpec([128,360, 640],tf.float32),tf.TensorSpec([128,360, 640],tf.float32),tf.TensorSpec([128,360, 640],tf.dtypes.float32)))
     options = tf.data.Options()
     options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.OFF
     ds = ds.with_options(options)
