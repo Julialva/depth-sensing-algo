@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO,
 logging.info(f"done importing... tf version:{tf.__version__}")
 logging.info(f"{tf.config.list_physical_devices('GPU')}")
 
-Zipname='Final_pics'
+Zipname='pics/Final_pics/Final_pics'
 # Define diretório onde se encontram as imagens
 left_image_path = f'./{Zipname}/left'
 right_image_path = f'./{Zipname}/right'
@@ -129,23 +129,9 @@ batch_size = 128
 img_size = (360, 640)
 
 
-# Instancia o gerador de dados de treinamento
-train_datagen = batch_generator(
-    train_left_img_paths, train_right_img_paths, img_size, m_train, batchsize=batch_size)
-
-# Usa o gerador uma vez
-[left_img_batch, right_img_batch], [out_img_batch, disp] = next(train_datagen)
 
 # Apresenta dimensão dos tensores de entrada de saída
 logging.info("Criando validation batch...")
-
-
-# Instancia o gerador de dados de validação
-val_datagen = batch_generator(
-    val_left_img_paths, val_right_img_paths, img_size, m_val, batchsize=batch_size)
-
-# Usa o gerador uma veze
-[left_img_batch, right_img_batch], [out_img_batch, disp] = next(val_datagen)
 
 
 # Calcula números de lotes por época
@@ -261,59 +247,48 @@ def loss_erro_rec(y_true, y_pred):
     return erro
 
 
-rec = Reconstructor(
-    height=left_img_batch.shape[1], width=left_img_batch.shape[2])
-
-
-# Número de filtros básico
-nF = 32
-
-# Rede convolucional de extração de características
-
-
-def rna_carac(input_shape, nF):
-    x0 = layers.Input(shape=input_shape)
-
-    # Calculo das características das imagens
-    x1 = layers.Conv2D(nF, (5, 5), padding='same',
-                       activation=layers.LeakyReLU())(x0)
-    x2 = layers.Conv2D(nF, (5, 5), padding='same', use_bias=False)(x1)
-    x2 = layers.BatchNormalization()(x2)
-    x2 = layers.LeakyReLU()(x2)
-    x2 = layers.MaxPool2D(2, 2)(x2)
-
-    x3 = layers.Conv2D(nF*2, (5, 5), padding='same',
-                       activation=layers.LeakyReLU())(x2)
-    x4 = layers.Conv2D(nF*2, (5, 5), padding='same', use_bias=False)(x3)
-    x4 = layers.BatchNormalization()(x4)
-    x4 = layers.LeakyReLU()(x4)
-    x4 = layers.MaxPool2D(2, 2)(x4)
-
-    x5 = layers.Conv2D(nF*4, (5, 5), padding='same',
-                       activation=layers.LeakyReLU())(x4)
-    x6 = layers.Conv2D(nF*4, (5, 5), padding='same', use_bias=False)(x5)
-    x6 = layers.BatchNormalization()(x6)
-    x6 = layers.LeakyReLU()(x6)
-    x6 = layers.MaxPool2D(2, 2)(x6)
-
-    x7 = layers.Conv2D(nF*4, (5, 5), padding='same',
-                       activation=layers.LeakyReLU())(x6)
-    x8 = layers.Conv2D(nF*4, (5, 5), padding='same', use_bias=False)(x7)
-    x8 = layers.BatchNormalization()(x8)
-    x8 = layers.LeakyReLU()(x8)
-
-    # Cria modelo
-    rna_carac = models.Model(x0, x8)
-
-    return rna_carac
 
 def create_final():
+    
+    def rna_carac(input_shape, nF=32):
+        x0 = layers.Input(shape=input_shape)
+
+    # Calculo das características das imagens
+        x1 = layers.Conv2D(nF, (5, 5), padding='same',
+                       activation=layers.LeakyReLU())(x0)
+        x2 = layers.Conv2D(nF, (5, 5), padding='same', use_bias=False)(x1)
+        x2 = layers.BatchNormalization()(x2)
+        x2 = layers.LeakyReLU()(x2)
+        x2 = layers.MaxPool2D(2, 2)(x2)
+
+        x3 = layers.Conv2D(nF*2, (5, 5), padding='same',
+                       activation=layers.LeakyReLU())(x2)
+        x4 = layers.Conv2D(nF*2, (5, 5), padding='same', use_bias=False)(x3)
+        x4 = layers.BatchNormalization()(x4)
+        x4 = layers.LeakyReLU()(x4)
+        x4 = layers.MaxPool2D(2, 2)(x4)
+
+        x5 = layers.Conv2D(nF*4, (5, 5), padding='same',
+                       activation=layers.LeakyReLU())(x4)
+        x6 = layers.Conv2D(nF*4, (5, 5), padding='same', use_bias=False)(x5)
+        x6 = layers.BatchNormalization()(x6)
+        x6 = layers.LeakyReLU()(x6)
+        x6 = layers.MaxPool2D(2, 2)(x6)
+
+        x7 = layers.Conv2D(nF*4, (5, 5), padding='same',
+                       activation=layers.LeakyReLU())(x6)
+        x8 = layers.Conv2D(nF*4, (5, 5), padding='same', use_bias=False)(x7)
+        x8 = layers.BatchNormalization()(x8)
+        x8 = layers.LeakyReLU()(x8)
+
+        # Cria modelo
+        rna_carac = models.Model(x0, x8)
+
+        return rna_carac
+    rec = Reconstructor(
+    height=640, width=360)    
     input_shape = (360, 640, 3)
-    rnaCV = rna_carac(input_shape, nF)
-
-    rnaCV.summary()
-
-    img_carac = rnaCV(left_img_batch)
+    rnaCV = rna_carac(input_shape)
 
     """## Rede completa"""
 
@@ -374,8 +349,18 @@ with strategy.scope():
                        'disp': 0.0},
                    metrics={
                        'rec_img': 'mae',
-                       'disp': 'mae'})
+                       'disp': 'mae'},run_eagerly=True)
 
+def make_dataset(generator_func,params):
+     # Get amount of files
+
+    ds = tf.data.Dataset.from_generator(generator_func, args=params,output_signature=(tf.TensorSpec([None, 360, 640, 3], tf.float32))) # Make a dataset from the generator. MAKE SURE TO SPECIFY THE DATA TYPE!!!
+
+    options = tf.data.Options()
+    options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.OFF
+    ds = ds.with_options(options)
+
+    return ds
 
 # Importa callback para salvar modelo durante treinamento
 
@@ -383,14 +368,12 @@ with strategy.scope():
 checkpointer = ModelCheckpoint(
     'rna_stereo_CVN_REC_weigths', verbose=1, save_best_only=True, save_weights_only=True)
 
-
-results = rna_stereo.fit(
-    batch_generator(train_left_img_paths, train_right_img_paths,
-                    img_size, m_train, batchsize=batch_size),
+test_set = make_dataset(batch_generator,[train_left_img_paths, train_right_img_paths,img_size, m_train, batch_size])
+validation_set=make_dataset(batch_generator,[val_left_img_paths, val_right_img_paths, img_size, m_val, batch_size])
+results = rna_stereo.fit(test_set,
     steps_per_epoch=train_steps,
-    epochs=250,
-    validation_data=batch_generator(
-        val_left_img_paths, val_right_img_paths, img_size, m_val, batchsize=batch_size),
+    epochs=1,
+    validation_data=validation_set,
     validation_steps=val_steps,
     callbacks=[checkpointer],
     verbose=1)
