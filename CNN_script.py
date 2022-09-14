@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
-from glob import glob
+import glob
 import os
 import logging
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
@@ -20,15 +20,15 @@ logging.info(f"{tf.config.list_physical_devices('GPU')}")
 
 img_size = (360, 640)
 # Define diretório onde se encontram as imagens
-left_image_path = './final_pics/left'
-right_image_path = './final_pics/right'
+left_image_path = './Final_pics/left'
+right_image_path = './Final_pics/right'
 
 # Escolhe tipos de arquivos desejados
 glob_left_imgs = os.path.join(left_image_path, '*.png')
 glob_right_imgs = os.path.join(right_image_path, '*.png')
 
 def load_img_dir(dir:str,ret, mtx, dist, rvecs, tvecs):
-    return [np.stack(img_to_array(undistort(ret, mtx, dist, rvecs, tvecs,(640, 360),load_img(file)))/255., axis=0) for file in glob.glob(dir)]
+    return [np.stack(undistort(ret, mtx, dist, rvecs, tvecs,(640, 360),img_to_array(load_img(file)))/255., axis=0) for file in glob.glob(dir)]
 
 def load_calib_dir(dir:str):
     return [cv2.imread(file) for file in glob.glob(dir)]
@@ -49,12 +49,12 @@ split = 3744
 # Conjunto de dados de treinamento
 train_left_imgs = left_imgs[:split]
 train_right_imgs = right_imgs[:split]
-train_disp_imgs = np.stack([np.zeros(360, 640)]*split, axis=0)
+train_disp_imgs = np.stack([np.zeros(img_size)]*(split-1), axis=0)
 # Conjunto de dados de validação
 val_left_imgs = left_imgs[split:]
 val_right_imgs = right_imgs[split:]
 num_dips = len(val_left_imgs)
-val_disp_imgs = np.stack([np.zeros(360, 640)]*num_dips, axis=0)
+val_disp_imgs = np.stack([np.zeros(img_size)]*num_dips, axis=0)
 
 logging.info("splitted DS!")
 
