@@ -21,8 +21,8 @@ h=360//2
 w=640//2
 img_size = (h, w)
 # Define diretório onde se encontram as imagens
-left_image_path = './Final_pics/left'
-right_image_path = './Final_pics/right'
+left_image_path = './pics/Final_pics/Final_pics/left'
+right_image_path = './pics/Final_pics/Final_pics/right'
 
 # Escolhe tipos de arquivos desejados
 glob_left_imgs = os.path.join(left_image_path, '*.png')
