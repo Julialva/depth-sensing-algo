@@ -18,8 +18,20 @@ logging.basicConfig(level=logging.INFO,
 logging.info(f"done importing... tf version:{tf.__version__}")
 logging.info(f"{tf.config.list_physical_devices('GPU')}")
 
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+  try:
+    # Currently, memory growth needs to be the same across GPUs
+    for gpu in gpus:
+      tf.config.experimental.set_memory_growth(gpu, True)
+    logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+    print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+  except RuntimeError as e:
+    # Memory growth must be set before GPUs have been initialized
+    print(e)
+
 def load_img_dir(dir:str,ret, mtx, dist, rvecs, tvecs):
-    return [tf.image.resize(undistort(ret, mtx, dist, rvecs, tvecs,(640, 360),img_to_array(load_img(file)))[:, :, :3], img_size)/255. for file in glob.glob(dir)]
+    return [tf.image.resize(undistort(ret, mtx, dist, rvecs, tvecs,(640, 360),img_to_array(load_img(file)))[:, :, :3], (360,640))/255. for file in glob.glob(dir)]
 
 def load_calib_dir(dir:str):
     return [cv2.imread(file) for file in glob.glob(dir)]
@@ -280,7 +292,7 @@ with strategy.scope():
 
     m_train = len(train_left_imgs)
     m_val = len(val_left_imgs)
-    batch_size = 16
+    batch_size = 13
     train_steps = len(train_left_imgs) // batch_size
     val_steps = len(val_left_imgs) // batch_size
     logging.info("splitted DS!")
@@ -300,15 +312,12 @@ with strategy.scope():
                        'disp': 0.0},
                    metrics={
                        'rec_img': 'mae',
-                       'disp': 'mae'},run_eagerly=True)
+                       'disp': 'mae'})
 
 def make_dataset(generator_func,params):
      # Get amount of files
 
-    ds =tf.data.Dataset.from_generator(generator_func, args=params,output_signature=(tf.TensorSpec([128,360, 640],tf.float32),tf.TensorSpec([128,360, 640],tf.float32),tf.TensorSpec([128,360, 640],tf.float32),tf.TensorSpec([128,360, 640],tf.dtypes.float32)))
-    options = tf.data.Options()
-    options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.OFF
-    ds = ds.with_options(options)
+    ds =tf.data.Dataset.from_generator(generator_func, args=params,output_signature=(tf.TensorSpec([13,360, 640,3],tf.float32),tf.TensorSpec([13,360, 640,3],tf.float32),tf.TensorSpec([13,360, 640,3],tf.float32),tf.TensorSpec([13,360, 640,3],tf.dtypes.float32)))
 
     return ds
 
