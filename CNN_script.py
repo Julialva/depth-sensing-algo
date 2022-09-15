@@ -17,8 +17,9 @@ logging.basicConfig(level=logging.INFO,
     format='%(asctime)s - %(funcName)s - %(levelname)s: %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 logging.info(f"done importing... tf version:{tf.__version__}")
 logging.info(f"{tf.config.list_physical_devices('GPU')}")
-
-img_size = (360, 640)
+h=360//2
+w=640//2
+img_size = (h, w)
 # Define diretório onde se encontram as imagens
 left_image_path = './Final_pics/left'
 right_image_path = './Final_pics/right'
