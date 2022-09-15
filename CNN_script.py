@@ -7,76 +7,61 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
-from glob import glob
+import glob
 import os
 import logging
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from calibrator import calibrate, undistort
-
+import cv2
 logging.basicConfig(level=logging.INFO,
     format='%(asctime)s - %(funcName)s - %(levelname)s: %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 logging.info(f"done importing... tf version:{tf.__version__}")
 logging.info(f"{tf.config.list_physical_devices('GPU')}")
-
-Zipname='Final_pics'
+h=360//2
+w=640//2
+img_size = (h, w)
 # Define diretório onde se encontram as imagens
-left_image_path = f'./{Zipname}/left'
-right_image_path = f'./{Zipname}/right'
-
+left_image_path = './pics/Final_pics/Final_pics/left'
+right_image_path = './pics/Final_pics/Final_pics/right'
 
 # Escolhe tipos de arquivos desejados
 glob_left_imgs = os.path.join(left_image_path, '*.png')
 glob_right_imgs = os.path.join(right_image_path, '*.png')
 
+def load_img_dir(dir:str,ret, mtx, dist, rvecs, tvecs):
+    return [tf.image.resize(undistort(ret, mtx, dist, rvecs, tvecs,(640, 360),img_to_array(load_img(file)))[:, :, :3], img_size)/255. for file in glob.glob(dir)]
 
+def load_calib_dir(dir:str):
+    return [cv2.imread(file) for file in glob.glob(dir)]
+
+def call_calibrate():
+    left_calib_imgs = load_calib_dir('./calib/left_cal/*.jpeg')
+    right_calib_imgs = load_calib_dir('./calib/right_cal/*.jpeg')
+    return calibrate(left_calib_imgs),calibrate(right_calib_imgs)
 # Cria lista dos nomes dos arquivos
-left_img_paths = glob(glob_left_imgs)
-right_img_paths = glob(glob_right_imgs)
-ret_r, mtx_r, dist_r, rvecs_r, tvecs_r = calibrate(
-    image_dir='./calib/right_cal/*.jpeg')
-ret_l, mtx_l, dist_l, rvecs_l, tvecs_l = calibrate(
-    image_dir='./calib/left_cal/*.jpeg')
+calib_l,calib_r= call_calibrate()
+left_imgs = load_img_dir(glob_left_imgs,*calib_l)
+right_imgs = load_img_dir(glob_right_imgs,*calib_r)
 
-# Ordena lista dos arquivos
-left_img_paths.sort()
-right_img_paths.sort()
-
-# Apresenta numero de imagens
-logging.info(f'Número de imagens da esquerda: {len(left_img_paths)}')
-logging.info(f'Número de imagens da direita: {len(right_img_paths)}')
-
-# Imprime nomes e paths dos 5 primeiros arquivos das listas
-logging.info('Nomes dos 5 primeiros arquivos das listas:')
-logging.info(f"fotos left: {left_img_paths[:5]}")
-logging.info(f"fotos right: {right_img_paths[:5]}")
-
-logging.info("shuffling...")
-left_img_paths, right_img_paths = shuffle(left_img_paths, right_img_paths)
-
-# Imprime nomes e paths dos 5 primeiros arquivos das listas
-logging.info('Nomes dos 5 primeiros arquivos das listas:')
-logging.info(f"fotos left: {left_img_paths[:5]}")
-logging.info(f"fotos right: {right_img_paths[:5]}")
-
+left_imgs, right_imgs = shuffle(left_imgs, right_imgs)
+logging.info("loaded DS!")
+# Imprime nomes e pat
 split = 3744
 # Conjunto de dados de treinamento
-train_left_img_paths = left_img_paths[:split]
-train_right_img_paths = right_img_paths[:split]
+train_left_imgs = left_imgs[:split]
+train_right_imgs = right_imgs[:split]
 
 # Conjunto de dados de validação
-val_left_img_paths = left_img_paths[split:]
-val_right_img_paths = right_img_paths[split:]
+val_left_imgs = left_imgs[split:]
+val_right_imgs = right_imgs[split:]
 
-# Numero de exemplos
-logging.info(
-    f"left count = {len(train_left_img_paths)}, right count = {len(train_right_img_paths)}")
-logging.info(
-    f"left val count = {len(val_left_img_paths)}, right val count = {len(val_right_img_paths)}")
+m_train = len(train_left_imgs)
+m_val = len(val_left_imgs)
 
+logging.info("splitted DS!")
 
-
-# Cria gerador para ser usado com o Keras
-def batch_generator(left_img_paths, right_img_paths, img_size, m_exemplos, batchsize):
+# Classe para reconstrutor
+def batch_generator(left_imgs, right_imgs, img_size, m_exemplos, batchsize):
     # Inicializa loop infinito que termina no final do treinamento
     while True:
 
@@ -88,27 +73,9 @@ def batch_generator(left_img_paths, right_img_paths, img_size, m_exemplos, batch
 
             end = min(start + batchsize, m_exemplos)
             for i in range(start, end):
-                # Carrega images e o mapa de disparidade
-                left_imagem = load_img(left_img_paths[i])
-                right_imagem = load_img(right_img_paths[i])
-
-                # Converet para tensor
-                left_imagem = img_to_array(left_imagem)
-                right_imagem = img_to_array(right_imagem)
-                right_imagem = undistort(
-                    ret_r, mtx_r, dist_r, rvecs_r, tvecs_r, (640, 360), right_imagem)
-                left_imagem = undistort(
-                    ret_l, mtx_l, dist_l, rvecs_l, tvecs_l, (640, 360), left_imagem)
+                left_imagem = left_imgs[i]
+                right_imagem = right_imgs[i]
                 disp_imagem = np.zeros(img_size)
-
-                # Elimina 4o canal
-                left_imagem = left_imagem[:, :, :3]
-                right_imagem = right_imagem[:, :, :3]
-
-                # Redimensiona imagens e normaliza
-                left_imagem = tf.image.resize(left_imagem, img_size)/255.
-                right_imagem = tf.image.resize(right_imagem, img_size)/255.
-
                 # Adiciona imagem original e segmentada aos lotes
                 batch_left_img.append(left_imagem)
                 batch_right_img.append(right_imagem)
@@ -117,32 +84,6 @@ def batch_generator(left_img_paths, right_img_paths, img_size, m_exemplos, batch
 
             yield [np.stack(batch_left_img, axis=0), np.stack(batch_right_img, axis=0)], [np.stack(batch_out_img, axis=0), np.stack(batch_disp_img, axis=0)]
             # Não tenho certeza se deixa o [] na saída
-
-logging.info("Criando image batch...")
-m_train = len(train_left_img_paths)
-m_val = len(val_left_img_paths)
-
-# Define tamanho do lote
-batch_size = 128
-
-# Dimensão desejada para as imagens
-img_size = (360, 640)
-
-
-
-# Apresenta dimensão dos tensores de entrada de saída
-logging.info("Criando validation batch...")
-
-
-# Calcula números de lotes por época
-train_steps = len(train_left_img_paths) // batch_size
-val_steps = len(val_left_img_paths) // batch_size
-logging.info(f"Calculando número de steps...")
-logging.info(f'Passos de treinamento: {train_steps}')
-logging.info(f'Passos de validação: {val_steps}')
-
-# Classe para reconstrutor
-
 
 class Reconstructor(tf.keras.layers.Layer):
     def __init__(self, height=40, width=40, num_channels=3, name="rec_img"):
@@ -242,59 +183,69 @@ class Reconstructor(tf.keras.layers.Layer):
 
 
 def loss_erro_rec(y_true, y_pred):
+    logging.info(y_pred)
+    logging.info(y_true)
     mask = tf.where(y_pred < 1e-08,  0., 1.)
     erro = 255*tf.reduce_mean(tf.square(mask*(y_true - y_pred)))
     return erro
 
 
+rec = Reconstructor(
+    height=img_size[1], width=img_size[0])
 
-def create_final():
-    
-    def rna_carac(input_shape, nF=32):
-        x0 = layers.Input(shape=input_shape)
+
+# Número de filtros básico
+nF = 32
+
+# Rede convolucional de extração de características
+
+
+def rna_carac(input_shape, nF):
+    x0 = layers.Input(shape=input_shape)
 
     # Calculo das características das imagens
-        x1 = layers.Conv2D(nF, (5, 5), padding='same',
+    x1 = layers.Conv2D(nF, (5, 5), padding='same',
                        activation=layers.LeakyReLU())(x0)
-        x2 = layers.Conv2D(nF, (5, 5), padding='same', use_bias=False)(x1)
-        x2 = layers.BatchNormalization()(x2)
-        x2 = layers.LeakyReLU()(x2)
-        x2 = layers.MaxPool2D(2, 2)(x2)
+    x2 = layers.Conv2D(nF, (5, 5), padding='same', use_bias=False)(x1)
+    x2 = layers.BatchNormalization()(x2)
+    x2 = layers.LeakyReLU()(x2)
+    x2 = layers.MaxPool2D(2, 2)(x2)
 
-        x3 = layers.Conv2D(nF*2, (5, 5), padding='same',
+    x3 = layers.Conv2D(nF*2, (5, 5), padding='same',
                        activation=layers.LeakyReLU())(x2)
-        x4 = layers.Conv2D(nF*2, (5, 5), padding='same', use_bias=False)(x3)
-        x4 = layers.BatchNormalization()(x4)
-        x4 = layers.LeakyReLU()(x4)
-        x4 = layers.MaxPool2D(2, 2)(x4)
+    x4 = layers.Conv2D(nF*2, (5, 5), padding='same', use_bias=False)(x3)
+    x4 = layers.BatchNormalization()(x4)
+    x4 = layers.LeakyReLU()(x4)
+    x4 = layers.MaxPool2D(2, 2)(x4)
 
-        x5 = layers.Conv2D(nF*4, (5, 5), padding='same',
+    x5 = layers.Conv2D(nF*4, (5, 5), padding='same',
                        activation=layers.LeakyReLU())(x4)
-        x6 = layers.Conv2D(nF*4, (5, 5), padding='same', use_bias=False)(x5)
-        x6 = layers.BatchNormalization()(x6)
-        x6 = layers.LeakyReLU()(x6)
-        x6 = layers.MaxPool2D(2, 2)(x6)
+    x6 = layers.Conv2D(nF*4, (5, 5), padding='same', use_bias=False)(x5)
+    x6 = layers.BatchNormalization()(x6)
+    x6 = layers.LeakyReLU()(x6)
+    x6 = layers.MaxPool2D(2, 2)(x6)
 
-        x7 = layers.Conv2D(nF*4, (5, 5), padding='same',
+    x7 = layers.Conv2D(nF*4, (5, 5), padding='same',
                        activation=layers.LeakyReLU())(x6)
-        x8 = layers.Conv2D(nF*4, (5, 5), padding='same', use_bias=False)(x7)
-        x8 = layers.BatchNormalization()(x8)
-        x8 = layers.LeakyReLU()(x8)
+    x8 = layers.Conv2D(nF*4, (5, 5), padding='same', use_bias=False)(x7)
+    x8 = layers.BatchNormalization()(x8)
+    x8 = layers.LeakyReLU()(x8)
 
         # Cria modelo
-        rna_carac = models.Model(x0, x8)
+    rna_carac = models.Model(x0, x8)
 
-        return rna_carac
-    rec = Reconstructor(
-    height=640, width=360)    
-    input_shape = (360, 640, 3)
-    rnaCV = rna_carac(input_shape)
+    return rna_carac
 
-    """## Rede completa"""
 
-    #### Rede de calculo da profundidade ####
-    input_shape = (img_size[0], img_size[1], 3)
+input_shape = (img_size[0], img_size[1], 3)
+rnaCV = rna_carac(input_shape, nF)
 
+rnaCV.summary()
+
+
+"""## Rede completa"""
+
+def create_final():
     # Define entradas
     input_left = tf.keras.layers.Input(shape=input_shape)
     input_right = tf.keras.layers.Input(shape=input_shape)
@@ -374,9 +325,7 @@ results = rna_stereo.fit(test_set,
     epochs=1,
     validation_data=validation_set,
     validation_steps=val_steps,
-    callbacks=[checkpointer],
     verbose=1)
-
 
 
 # Restore the weights

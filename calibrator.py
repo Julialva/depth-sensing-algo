@@ -4,7 +4,7 @@ import glob
 #from picture_api.utils.image_utils import show_image
 
 
-def calibrate(frame_size: tuple = (640, 360), chessboard_size: tuple = (8, 6), image_dir: str = ''):
+def calibrate(image_list, chessboard_size: tuple = (8, 6)):
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
     # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
@@ -18,10 +18,7 @@ def calibrate(frame_size: tuple = (640, 360), chessboard_size: tuple = (8, 6), i
 
     # os.chdir(dir)
 
-    images = glob.glob(image_dir)
-
-    for fname in images:
-        img = cv2.imread(fname)
+    for img in image_list:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         # show_image(img)
         # show_image(gray)
