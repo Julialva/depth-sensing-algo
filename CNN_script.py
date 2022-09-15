@@ -49,17 +49,41 @@ split = 3744
 # Conjunto de dados de treinamento
 train_left_imgs = left_imgs[:split]
 train_right_imgs = right_imgs[:split]
-train_disp_imgs = np.stack([np.zeros(img_size)]*(split-1), axis=0)
+
 # Conjunto de dados de validação
 val_left_imgs = left_imgs[split:]
 val_right_imgs = right_imgs[split:]
-num_dips = len(val_left_imgs)
-val_disp_imgs = np.stack([np.zeros(img_size)]*num_dips, axis=0)
+
+m_train = len(train_left_imgs)
+m_val = len(val_left_imgs)
 
 logging.info("splitted DS!")
 
 # Classe para reconstrutor
+def batch_generator(left_imgs, right_imgs, img_size, m_exemplos, batchsize):
+    # Inicializa loop infinito que termina no final do treinamento
+    while True:
 
+        # Loop para selecionar imagens de cada lote
+        for start in range(0, m_exemplos, batchsize):
+
+            # Inicializa lista de imagens com máscara e sem máscara
+            batch_left_img, batch_right_img, batch_disp_img, batch_out_img = [], [], [], []
+
+            end = min(start + batchsize, m_exemplos)
+            for i in range(start, end):
+                left_imagem = left_imgs[i]
+                right_imagem = right_imgs[i]
+                disp_imagem = np.zeros(img_size)
+                
+                # Adiciona imagem original e segmentada aos lotes
+                batch_left_img.append(left_imagem)
+                batch_right_img.append(right_imagem)
+                batch_out_img.append(right_imagem)
+                batch_disp_img.append(disp_imagem)
+
+            yield [np.stack(batch_left_img, axis=0), np.stack(batch_right_img, axis=0)], [np.stack(batch_out_img, axis=0), np.stack(batch_disp_img, axis=0)]
+            # Não tenho certeza se deixa o [] na saída
 
 class Reconstructor(tf.keras.layers.Layer):
     def __init__(self, height=40, width=40, num_channels=3, name="rec_img"):
@@ -279,16 +303,18 @@ rna_stereo.compile(optimizer=adam,
 # Define o callback para salvar os parâmetros
 checkpointer = ModelCheckpoint(
     'rna_stereo_CVN_REC_weigths', verbose=1, save_best_only=True, save_weights_only=True)
+batch_size = 256
+train_steps = len(train_left_imgs) // batch_size
+val_steps = len(val_left_imgs) // batch_size
 
 
-results = rna_stereo.fit(x=[train_left_imgs,train_right_imgs],
-                         y=[train_right_imgs, train_disp_imgs],
-    batch_size=256,
-    epochs=100,
-    validation_data=([val_left_imgs,val_right_imgs],[val_right_imgs,val_disp_imgs]),
+results = rna_stereo.fit(batch_generator(train_left_imgs, train_right_imgs,img_size, m_train, batch_size),
+    steps_per_epoch=train_steps,
+    epochs=1,
+    validation_data=batch_generator(val_left_imgs, val_right_imgs, img_size, m_val, batchsize=batch_size),
     callbacks=[checkpointer],
+    validation_steps=val_steps,
     verbose=1)
-
 
 
 # Restore the weights
