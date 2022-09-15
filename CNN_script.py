@@ -28,7 +28,7 @@ glob_left_imgs = os.path.join(left_image_path, '*.png')
 glob_right_imgs = os.path.join(right_image_path, '*.png')
 
 def load_img_dir(dir:str,ret, mtx, dist, rvecs, tvecs):
-    return [np.stack(undistort(ret, mtx, dist, rvecs, tvecs,(640, 360),img_to_array(load_img(file)))/255., axis=0) for file in glob.glob(dir)]
+    return [tf.image.resize(undistort(ret, mtx, dist, rvecs, tvecs,(640, 360),img_to_array(load_img(file)))[:, :, :3], img_size)/255. for file in glob.glob(dir)]
 
 def load_calib_dir(dir:str):
     return [cv2.imread(file) for file in glob.glob(dir)]
@@ -75,7 +75,6 @@ def batch_generator(left_imgs, right_imgs, img_size, m_exemplos, batchsize):
                 left_imagem = left_imgs[i]
                 right_imagem = right_imgs[i]
                 disp_imagem = np.zeros(img_size)
-                
                 # Adiciona imagem original e segmentada aos lotes
                 batch_left_img.append(left_imagem)
                 batch_right_img.append(right_imagem)
@@ -303,14 +302,14 @@ rna_stereo.compile(optimizer=adam,
 # Define o callback para salvar os parâmetros
 checkpointer = ModelCheckpoint(
     'rna_stereo_CVN_REC_weigths', verbose=1, save_best_only=True, save_weights_only=True)
-batch_size = 256
+batch_size = 16
 train_steps = len(train_left_imgs) // batch_size
 val_steps = len(val_left_imgs) // batch_size
 
 
 results = rna_stereo.fit(batch_generator(train_left_imgs, train_right_imgs,img_size, m_train, batch_size),
     steps_per_epoch=train_steps,
-    epochs=1,
+    epochs=500,
     validation_data=batch_generator(val_left_imgs, val_right_imgs, img_size, m_val, batchsize=batch_size),
     callbacks=[checkpointer],
     validation_steps=val_steps,
