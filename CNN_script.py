@@ -17,16 +17,6 @@ logging.basicConfig(level=logging.INFO,
     format='%(asctime)s - %(funcName)s - %(levelname)s: %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 logging.info(f"done importing... tf version:{tf.__version__}")
 logging.info(f"{tf.config.list_physical_devices('GPU')}")
-h=360//2
-w=640//2
-img_size = (h, w)
-# Define diretório onde se encontram as imagens
-left_image_path = './pics/Final_pics/Final_pics/left'
-right_image_path = './pics/Final_pics/Final_pics/right'
-
-# Escolhe tipos de arquivos desejados
-glob_left_imgs = os.path.join(left_image_path, '*.png')
-glob_right_imgs = os.path.join(right_image_path, '*.png')
 
 def load_img_dir(dir:str,ret, mtx, dist, rvecs, tvecs):
     return [tf.image.resize(undistort(ret, mtx, dist, rvecs, tvecs,(640, 360),img_to_array(load_img(file)))[:, :, :3], img_size)/255. for file in glob.glob(dir)]
@@ -38,27 +28,6 @@ def call_calibrate():
     left_calib_imgs = load_calib_dir('./calib/left_cal/*.jpeg')
     right_calib_imgs = load_calib_dir('./calib/right_cal/*.jpeg')
     return calibrate(left_calib_imgs),calibrate(right_calib_imgs)
-# Cria lista dos nomes dos arquivos
-calib_l,calib_r= call_calibrate()
-left_imgs = load_img_dir(glob_left_imgs,*calib_l)
-right_imgs = load_img_dir(glob_right_imgs,*calib_r)
-
-left_imgs, right_imgs = shuffle(left_imgs, right_imgs)
-logging.info("loaded DS!")
-# Imprime nomes e pat
-split = 3744
-# Conjunto de dados de treinamento
-train_left_imgs = left_imgs[:split]
-train_right_imgs = right_imgs[:split]
-
-# Conjunto de dados de validação
-val_left_imgs = left_imgs[split:]
-val_right_imgs = right_imgs[split:]
-
-m_train = len(train_left_imgs)
-m_val = len(val_left_imgs)
-
-logging.info("splitted DS!")
 
 # Classe para reconstrutor
 def batch_generator(left_imgs, right_imgs, img_size, m_exemplos, batchsize):
@@ -190,12 +159,6 @@ def loss_erro_rec(y_true, y_pred):
     return erro
 
 
-rec = Reconstructor(
-    height=img_size[1], width=img_size[0])
-
-
-# Número de filtros básico
-nF = 32
 
 # Rede convolucional de extração de características
 
@@ -237,15 +200,17 @@ def rna_carac(input_shape, nF):
     return rna_carac
 
 
-input_shape = (img_size[0], img_size[1], 3)
-rnaCV = rna_carac(input_shape, nF)
-
-rnaCV.summary()
-
-
 """## Rede completa"""
 
-def create_final():
+def create_final(img_size):
+    nF = 32
+    rec = Reconstructor(
+    height=img_size[1], width=img_size[0])
+
+    input_shape = (img_size[0], img_size[1], 3)
+    rnaCV = rna_carac(input_shape, nF)
+
+    rnaCV.summary()
     # Define entradas
     input_left = tf.keras.layers.Input(shape=input_shape)
     input_right = tf.keras.layers.Input(shape=input_shape)
@@ -281,16 +246,51 @@ def create_final():
     rna_stereo = keras.Model(
         inputs=[input_left, input_right], outputs=[img_rec, disp])
     return rna_stereo
+
 strategy = tf.distribute.MirroredStrategy()
 print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
     # Create the Keras model.
 with strategy.scope():
-# Importa classe dos otimizadores
-    rna_stereo = create_final()
-# Define otimizador Adam
+    h=360
+    w=640
+    img_size = (h, w)
+    # Define diretório onde se encontram as imagens
+    left_image_path = './Final_pics/left'
+    right_image_path = './Final_pics/right'
+
+    # Escolhe tipos de arquivos desejados
+    glob_left_imgs = os.path.join(left_image_path, '*.png')
+    glob_right_imgs = os.path.join(right_image_path, '*.png')
+    # Cria lista dos nomes dos arquivos
+    calib_l,calib_r= call_calibrate()
+    left_imgs = load_img_dir(glob_left_imgs,*calib_l)
+    right_imgs = load_img_dir(glob_right_imgs,*calib_r)
+
+    left_imgs, right_imgs = shuffle(left_imgs, right_imgs)
+    logging.info("loaded DS!")
+    # Imprime nomes e pat
+    split = 3744
+    # Conjunto de dados de treinamento
+    train_left_imgs = left_imgs[:split]
+    train_right_imgs = right_imgs[:split]
+
+    # Conjunto de dados de validação
+    val_left_imgs = left_imgs[split:]
+    val_right_imgs = right_imgs[split:]
+
+    m_train = len(train_left_imgs)
+    m_val = len(val_left_imgs)
+    batch_size = 16
+    train_steps = len(train_left_imgs) // batch_size
+    val_steps = len(val_left_imgs) // batch_size
+    logging.info("splitted DS!")
+
+    # Importa classe dos otimizadores
+    rna_stereo = create_final(img_size)
+    # Define otimizador Adam
     adam = optimizers.Adam(learning_rate=0.001, decay=1e-03)
 
-# Compilação do autoencoder
+    # Compilação do autoencoder
     rna_stereo.compile(optimizer=adam,
                    loss={
                        'rec_img': loss_erro_rec,
@@ -318,8 +318,8 @@ def make_dataset(generator_func,params):
 checkpointer = ModelCheckpoint(
     'rna_stereo_CVN_REC_weigths', verbose=1, save_best_only=True, save_weights_only=True)
 
-test_set = make_dataset(batch_generator,[train_left_img_paths, train_right_img_paths,img_size, m_train, batch_size])
-validation_set=make_dataset(batch_generator,[val_left_img_paths, val_right_img_paths, img_size, m_val, batch_size])
+test_set = make_dataset(batch_generator,[train_left_imgs, train_right_imgs,img_size, m_train, batch_size])
+validation_set=make_dataset(batch_generator,[val_left_imgs, val_right_imgs, img_size, m_val, batch_size])
 results = rna_stereo.fit(test_set,
     steps_per_epoch=train_steps,
     epochs=1,
