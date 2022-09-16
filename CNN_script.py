@@ -17,12 +17,12 @@ logging.basicConfig(level=logging.INFO,
     format='%(asctime)s - %(funcName)s - %(levelname)s: %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 logging.info(f"done importing... tf version:{tf.__version__}")
 logging.info(f"{tf.config.list_physical_devices('GPU')}")
-h=360//2
-w=640//2
+h=360
+w=640
 img_size = (h, w)
 # Define diretório onde se encontram as imagens
-left_image_path = './pics/Final_pics/Final_pics/left'
-right_image_path = './pics/Final_pics/Final_pics/right'
+left_image_path = './Final_pics/left'
+right_image_path = './Final_pics/right'
 
 # Escolhe tipos de arquivos desejados
 glob_left_imgs = os.path.join(left_image_path, '*.png')
@@ -310,7 +310,7 @@ val_steps = len(val_left_imgs) // batch_size
 
 results = rna_stereo.fit(batch_generator(train_left_imgs, train_right_imgs,img_size, m_train, batch_size),
     steps_per_epoch=train_steps,
-    epochs=500,
+    epochs=380,
     validation_data=batch_generator(val_left_imgs, val_right_imgs, img_size, m_val, batchsize=batch_size),
     callbacks=[checkpointer],
     validation_steps=val_steps,
