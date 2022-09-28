@@ -24,7 +24,7 @@ zerao = np.zeros((h,w))
 # Define diretório onde se encontram as imagens
 left_image_path = './Final_pics/left'
 right_image_path = './Final_pics/right'
-
+logging.info('getting paths...')    
 # Escolhe tipos de arquivos desejados
 glob_left_imgs = os.path.join(left_image_path, '*.png')
 glob_right_imgs = os.path.join(right_image_path, '*.png')
@@ -41,6 +41,7 @@ def call_calibrate():
     return calibrate(left_calib_imgs),calibrate(right_calib_imgs)
 # Cria lista dos nomes dos arquivos
 calib_l,calib_r= call_calibrate()
+logging.info("loading imgs...")
 left_imgs = load_img_dir(glob_left_imgs,*calib_l)
 right_imgs = load_img_dir(glob_right_imgs,*calib_r)
 
