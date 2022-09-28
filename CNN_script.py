@@ -76,7 +76,7 @@ def batch_generator(left_imgs, right_imgs, img_size, m_exemplos, batchsize):
             for i in range(start, end):
                 left_imagem = left_imgs[i]
                 right_imagem = right_imgs[i]
-                disp_imagem = np.zeros(img_size)
+                disp_imagem = zerao
                 # Adiciona imagem original e segmentada aos lotes
                 batch_left_img.append(left_imagem)
                 batch_right_img.append(right_imagem)
