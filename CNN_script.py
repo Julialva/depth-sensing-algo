@@ -320,7 +320,7 @@ val_steps = len(val_left_imgs) // batch_size
 
 results = rna_stereo.fit(batch_generator(train_left_imgs, train_right_imgs,img_size, m_train, batch_size),
     steps_per_epoch=train_steps,
-    epochs=1,
+    epochs=1000,
     validation_data=batch_generator(val_left_imgs, val_right_imgs, img_size, m_val, batchsize=batch_size),
     callbacks=[checkpointer],
     validation_steps=val_steps,
