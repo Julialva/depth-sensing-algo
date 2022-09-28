@@ -364,33 +364,3 @@ pos[2].imshow(disp_prev, cmap='gray')
 plt.savefig('plot1.jpeg')
 
 plt.imsave("disp_img.jpeg",disp_prev, cmap='gray')
-
-results_dict = results.history
-
-# Salva custos, métricas e epocas em vetores 
-custo = results_dict['loss']
-rec_mae = results_dict['rec_img_mae']
-#disp_mae = results_dict['disp_mae']
-val_custo = results_dict['val_loss']
-val_rec_mae = results_dict['val_rec_img_mae']
-#val_disp_mae = results_dict['val_disp_mae']
-#val_mae = results_dict['val_mae']
-
-# Cria vetor de épocas
-epocas = range(1, len(custo) + 1)
-plt.plot(epocas, custo, 'b', label='Custo - treinamento')
-plt.plot(epocas, val_custo, 'r', label='Custo - validação')
-plt.title('Valor da função de custo – treinamento e validação')
-plt.xlabel('Épocas')
-plt.ylabel('Custo')
-plt.legend()
-plt.savefig("plot2.jpeg")
-
-# Gráfico dos valores da métrica
-plt.plot(epocas, rec_mae, 'b', label='MAE - treinamento')
-plt.plot(epocas, val_rec_mae, 'r', label='MAE - validação')
-plt.title('Valor da métrica de reconstrução – treinamento e validação')
-plt.xlabel('Épocas')
-plt.ylabel('REC_MAE')
-plt.legend()
-plt.savefig("plot3.jpeg")
