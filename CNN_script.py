@@ -361,9 +361,9 @@ f, pos = plt.subplots(1, 3, figsize=(30, 30))
 pos[0].imshow(right_img)
 pos[1].imshow(img_prev)
 pos[2].imshow(disp_prev, cmap='gray')
-plt.savefig('plot1.png')
+plt.savefig('plot1.jpeg')
 
-plt.imsave("disp_img.png",disp_prev, cmap='gray')
+plt.imsave("disp_img.jpeg",disp_prev, cmap='gray')
 
 results_dict = results.history
 
@@ -384,7 +384,7 @@ plt.title('Valor da função de custo – treinamento e validação')
 plt.xlabel('Épocas')
 plt.ylabel('Custo')
 plt.legend()
-plt.savefig("plot2.png")
+plt.savefig("plot2.jpeg")
 
 # Gráfico dos valores da métrica
 plt.plot(epocas, rec_mae, 'b', label='MAE - treinamento')
@@ -393,4 +393,4 @@ plt.title('Valor da métrica de reconstrução – treinamento e validação')
 plt.xlabel('Épocas')
 plt.ylabel('REC_MAE')
 plt.legend()
-plt.savefig("plot3.png")
+plt.savefig("plot3.jpeg")
