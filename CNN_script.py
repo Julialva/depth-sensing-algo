@@ -313,7 +313,7 @@ rna_stereo.compile(optimizer=adam,
 # Define o callback para salvar os parâmetros
 checkpointer = ModelCheckpoint(
     'rna_stereo_CVN_REC_weigths', verbose=1, save_best_only=True, save_weights_only=True)
-batch_size = 2
+batch_size = 32
 train_steps = len(train_left_imgs) // batch_size
 val_steps = len(val_left_imgs) // batch_size
 
