@@ -1,10 +1,10 @@
 import cv2
 import time
 
-capLeft = cv2.VideoCapture(1,cv2.CAP_DSHOW)
+capLeft = cv2.VideoCapture(0,cv2.CAP_DSHOW)
 capLeft.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 capLeft.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
-capRight = cv2.VideoCapture(2,cv2.CAP_DSHOW)
+capRight = cv2.VideoCapture(1,cv2.CAP_DSHOW)
 capRight.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 capRight.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
 count = 0
@@ -38,7 +38,7 @@ def picture_loop(camLeft,camRight,loop_size):
     except Exception as e:
         print(e)
         return False
-while(count<500):
+while(count<120):
     if state:
         state = picture_loop(capLeft,capRight,loop_size)
     else:
