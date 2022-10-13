@@ -69,7 +69,7 @@ def undistort(ret, mtx, dist, rvecs, tvecs, img_size, img):
 cap1 = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 cap1.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap1.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
-cap2 = cv2.VideoCapture(2, cv2.CAP_DSHOW)
+cap2 = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 cap2.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap2.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
 
@@ -241,10 +241,10 @@ rna_stereo = keras.Model(
 
 rna_stereo.load_weights('demonstration/rna_stereo_CVN_REC_weigths_close')
 q = [*np.zeros(10)]
-filters = np.ones((1, 7, 9, 1))/63.0
+filters = np.ones((1, 4, 7, 1))/27.0
 init = tf.constant_initializer(filters)
 conv_mean = tf.keras.layers.Conv2D(
-    1, (7, 9), padding='same', kernel_initializer=init, bias_initializer='zeros', trainable=False)
+    1, (4, 7), padding='same', kernel_initializer=init, bias_initializer='zeros', trainable=False)
 while (True):
     ret, frame = cap1.read()
     ret2, frame2 = cap2.read()
@@ -262,7 +262,7 @@ while (True):
     cv2.imshow('left', frame)
     cv2.imshow('right', frame2)
     colormapped_image = cv2.applyColorMap(
-        disp_mean[0, :, :, :].numpy().astype(np.uint8), cv2.COLORMAP_HOT)
+        disp_mean[0, :, :, :].numpy().astype(np.uint8), cv2.COLORMAP_INFERNO)
     #disp_mean[0, :, :, 0]
     cv2.imshow('disp', colormapped_image)
     #cv2.imshow('rec', img_prev_batch[0, :, :, :])
