@@ -9,6 +9,8 @@ from keras.applications.xception import Xception
 import numpy as np
 import glob
 import matplotlib.pyplot as plt
+import pdb
+
 
 def calibrate(frame_size: tuple = (640, 360), chessboard_size: tuple = (8, 6), image_dir: str = ''):
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
@@ -48,11 +50,13 @@ def calibrate(frame_size: tuple = (640, 360), chessboard_size: tuple = (8, 6), i
             # cv2.waitKey(500)
         else:
             raise "ImageError: Chessboard not found."
-    
+
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
-                objpoints, imgpoints, gray.shape[::-1], None, None)
+        objpoints, imgpoints, gray.shape[::-1], None, None)
     return ret, mtx, dist, rvecs, tvecs
     # cv2.destroyAllWindows()
+
+
 def undistort(ret, mtx, dist, rvecs, tvecs, img_size, img):
     newcameramtx, roi = cv2.getOptimalNewCameraMatrix(
         mtx, dist, img_size, 1, img_size)
@@ -62,13 +66,10 @@ def undistort(ret, mtx, dist, rvecs, tvecs, img_size, img):
     return dst
 
 
-
-
-
-cap1 = cv2.VideoCapture(1,cv2.CAP_DSHOW)
+cap1 = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 cap1.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap1.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
-cap2 = cv2.VideoCapture(0,cv2.CAP_DSHOW)
+cap2 = cv2.VideoCapture(2, cv2.CAP_DSHOW)
 cap2.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap2.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
 
@@ -77,6 +78,7 @@ ret_r, mtx_r, dist_r, rvecs_r, tvecs_r = calibrate(
     image_dir='./calib/right_cal/*.jpeg')
 ret_l, mtx_l, dist_l, rvecs_l, tvecs_l = calibrate(
     image_dir='./calib/left_cal/*.jpeg')
+
 
 class Reconstructor(tf.keras.layers.Layer):
     def __init__(self, height=40, width=40, num_channels=3, name="rec_img"):
@@ -197,7 +199,7 @@ rnaCV = Model(inputs=base_model.input, outputs=base_model.layers[25].output)
 # mark loaded layers as not trainable
 for layer in rnaCV.layers:
     layer.trainable = False
-    
+
 input_left = tf.keras.layers.Input(shape=input_shape)
 input_right = tf.keras.layers.Input(shape=input_shape)
 
@@ -206,21 +208,24 @@ xL = rnaCV(inputs=input_left)
 xR = rnaCV(inputs=input_right)
 
 # Cocatena com características
-ac = layers.Concatenate(axis=-1)([xL ,xR])
+ac = layers.Concatenate(axis=-1)([xL, xR])
 
 # Aplica convolução
-conv_size=3
+conv_size = 3
 x2 = layers.Conv2DTranspose(
     64, (conv_size, conv_size), padding='same', activation='relu', strides=(2, 2))(ac)
-x2 = layers.Conv2D(64, (conv_size, conv_size), padding='same', activation='relu')(x2)
+x2 = layers.Conv2D(64, (conv_size, conv_size),
+                   padding='same', activation='relu')(x2)
 x3 = layers.Conv2DTranspose(
     32, (conv_size, conv_size), padding='same', activation='relu', strides=(2, 2))(x2)
-x3 = layers.Conv2D(32, (conv_size, conv_size), padding='same', activation='relu')(x3)
+x3 = layers.Conv2D(32, (conv_size, conv_size),
+                   padding='same', activation='relu')(x3)
 
 # Calcula da disparidade
 x4 = layers.Conv2DTranspose(
     16, (conv_size, conv_size), padding='same', activation='relu', strides=(2, 2))(x3)
-x4 = layers.Conv2D(16, (conv_size, conv_size), padding='same', activation='relu')(x4)
+x4 = layers.Conv2D(16, (conv_size, conv_size),
+                   padding='same', activation='relu')(x4)
 
 x5 = layers.Conv2D(1, (1, 1), padding='same', activation='relu')(x4)
 
@@ -235,31 +240,32 @@ rna_stereo = keras.Model(
     inputs=[input_left, input_right], outputs=[img_rec, disp])
 
 rna_stereo.load_weights('demonstration/rna_stereo_CVN_REC_weigths_close')
-q=[*np.zeros(10)]
-filters = np.ones((1,7,7,1))/9.0
+q = [*np.zeros(10)]
+filters = np.ones((1, 7, 9, 1))/63.0
 init = tf.constant_initializer(filters)
-conv_mean = tf.keras.layers.Conv2D(1, (7,7), padding='same', kernel_initializer=init, bias_initializer='zeros', trainable=False)
-while(True):
+conv_mean = tf.keras.layers.Conv2D(
+    1, (7, 9), padding='same', kernel_initializer=init, bias_initializer='zeros', trainable=False)
+while (True):
     ret, frame = cap1.read()
     ret2, frame2 = cap2.read()
     right_imagem = undistort(
         ret_r, mtx_r, dist_r, rvecs_r, tvecs_r, (640, 360), frame2)
     left_imagem = undistort(
         ret_l, mtx_l, dist_l, rvecs_l, tvecs_l, (640, 360), frame)
-    left_imagem = tf.image.resize(left_imagem, (360,640))/255.
-    right_imagem = tf.image.resize(right_imagem, (360,640))/255.
-    img_prev_batch,disp_prev_batch = rna_stereo.predict([left_imagem[tf.newaxis,:,:,:], right_imagem[tf.newaxis,:,:,:]])
+    left_imagem = tf.image.resize(left_imagem, (360, 640))/255.
+    right_imagem = tf.image.resize(right_imagem, (360, 640))/255.
+    img_prev_batch, disp_prev_batch = rna_stereo.predict(
+        [left_imagem[tf.newaxis, :, :, :], right_imagem[tf.newaxis, :, :, :]])
 
     # Realiza filtragem
-    disp_mean = conv_mean(disp_prev_batch[tf.newaxis,:,:,tf.newaxis])
+    disp_mean = conv_mean(disp_prev_batch[tf.newaxis, :, :, tf.newaxis])
     cv2.imshow('left', frame)
     cv2.imshow('right', frame2)
-    colormapped_image =cv2.applyColorMap(disp_prev_batch.astype(np.uint8), cv2.COLORMAP_INFERNO)
+    colormapped_image = cv2.applyColorMap(
+        disp_mean[0, :, :, :].numpy().astype(np.uint8), cv2.COLORMAP_HOT)
+    #disp_mean[0, :, :, 0]
     cv2.imshow('disp', colormapped_image)
-    cv2.imshow('rec', img_prev_batch[0,:,:,:])
-    m = disp_prev_batch.max()
-    q.insert(0,m)     
-    q.pop()
-    print(m)
+    #cv2.imshow('rec', img_prev_batch[0, :, :, :])
+
     if cv2.waitKey(1) & 0XFF == ord('q'):
         break
