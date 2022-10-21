@@ -5,12 +5,26 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.models import Model
 import logging
+import time
 from keras.applications.xception import Xception
 import numpy as np
 import glob
 import matplotlib.pyplot as plt
-import pdb
+import os
+from tensorflow.keras.utils import load_img, img_to_array
 
+left_image_path = 'maua_pics/left'
+right_image_path = 'maua_pics/right'
+
+
+# Escolhe tipos de arquivos desejados
+glob_left_imgs = os.path.join(left_image_path, '*.png')
+glob_right_imgs = os.path.join(right_image_path, '*.png')
+
+
+# Cria lista dos nomes dos arquivos
+left_img_paths = glob.glob(glob_left_imgs)
+right_img_paths = glob.glob(glob_right_imgs)
 
 def calibrate(frame_size: tuple = (640, 360), chessboard_size: tuple = (8, 6), image_dir: str = ''):
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
@@ -66,15 +80,6 @@ def undistort(ret, mtx, dist, rvecs, tvecs, img_size, img):
     return dst
 
 
-cap2 = cv2.VideoCapture(2, cv2.CAP_DSHOW)
-cap2.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-cap2.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
-cap1 = cv2.VideoCapture(1, cv2.CAP_DSHOW)
-cap1.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-cap1.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
-cap3 = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-cap3.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-cap3.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
 
 
 ret_r, mtx_r, dist_r, rvecs_r, tvecs_r = calibrate(
@@ -185,7 +190,6 @@ def loss_erro_rec(y_true, y_pred):
     erro = 255*tf.reduce_mean(tf.square(mask*(y_true - y_pred)))
     return erro
 
-
 rec = Reconstructor(
     height=360, width=640)
 
@@ -244,32 +248,46 @@ rna_stereo = keras.Model(
 
 rna_stereo.load_weights('demonstration/rna_stereo_CVN_REC_weigths_close')
 q = [*np.zeros(10)]
-filters = np.ones((1, 4, 7, 1))/27.0
+filters = np.ones((1, 7, 7, 1))/49.0
 init = tf.constant_initializer(filters)
 conv_mean = tf.keras.layers.Conv2D(
-    1, (4, 7), padding='same', kernel_initializer=init, bias_initializer='zeros', trainable=False)
-while (True):
-    ret, frame = cap1.read()
-    ret2, frame2 = cap2.read()
-    ret3, frame3 = cap2.read()
-    right_imagem = undistort(
-        ret_r, mtx_r, dist_r, rvecs_r, tvecs_r, (640, 360), frame2)
-    left_imagem = undistort(
-        ret_l, mtx_l, dist_l, rvecs_l, tvecs_l, (640, 360), frame)
-    left_imagem = tf.image.resize(left_imagem, (360, 640))/255.
-    right_imagem = tf.image.resize(right_imagem, (360, 640))/255.
-    img_prev_batch, disp_prev_batch = rna_stereo.predict(
-        [left_imagem[tf.newaxis, :, :, :], right_imagem[tf.newaxis, :, :, :]])
+    1, (7, 7), padding='same', kernel_initializer=init, bias_initializer='zeros', trainable=False)
+while True:
+    print(1)
+    for i in range(len(left_img_paths)):
+
+        left_imagem = load_img(left_img_paths[i])
+        right_imagem = load_img(right_img_paths[i])
+                
+                # Converet para tensor 
+        left_imagem = img_to_array(left_imagem)
+        right_imagem = img_to_array(right_imagem)
+
+                # Elimina 4o canal
+        frame = left_imagem[:,:,:3]
+        frame2 = right_imagem[:,:,:3]
+        right_imagem = undistort(
+            ret_r, mtx_r, dist_r, rvecs_r, tvecs_r, (640, 360), frame2)
+        left_imagem = undistort(
+            ret_l, mtx_l, dist_l, rvecs_l, tvecs_l, (640, 360), frame)
+        left_imagem_S = tf.image.resize(left_imagem, (360, 640))
+        left_imagem = left_imagem_S/255.
+        right_imagem_S = tf.image.resize(right_imagem, (360, 640))
+        right_imagem = right_imagem_S/255.
+        img_prev_batch, disp_prev_batch = rna_stereo.predict(
+            [left_imagem[tf.newaxis, :, :, :], right_imagem[tf.newaxis, :, :, :]])
 
     # Realiza filtragem
-    disp_mean = conv_mean(disp_prev_batch[tf.newaxis, :, :, tf.newaxis])
-    cv2.imshow('left', frame)
-    cv2.imshow('right', frame2)
-    colormapped_image = cv2.applyColorMap(
-        disp_mean[0, :, :, :].numpy().astype(np.uint8), cv2.COLORMAP_INFERNO)
+        disp_mean = conv_mean(disp_prev_batch[tf.newaxis, :, :, tf.newaxis])
+        cv2.imshow('left', left_imagem_S.numpy().astype(np.uint8))
+        cv2.imshow('right', right_imagem_S.numpy().astype(np.uint8))
+        cv2.imshow('rec', img_prev_batch[0])
+        img_prev_batch
+        colormapped_image = cv2.applyColorMap(
+            disp_mean[0, :, :, :].numpy().astype(np.uint8), cv2.COLORMAP_INFERNO)
     #disp_mean[0, :, :, 0]
-    cv2.imshow('disp', colormapped_image)
+        cv2.imshow('disp', colormapped_image)
     #cv2.imshow('rec', img_prev_batch[0, :, :, :])
 
-    if cv2.waitKey(1) & 0XFF == ord('q'):
-        break
+        if cv2.waitKey(1) & 0XFF == ord('q'):
+            break

@@ -69,10 +69,11 @@ def undistort(ret, mtx, dist, rvecs, tvecs, img_size, img):
     return dst
 
 
+
 cap1 = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 cap1.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap1.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
-cap2 = cv2.VideoCapture(2, cv2.CAP_DSHOW)
+cap2 = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 cap2.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap2.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
 
@@ -243,8 +244,8 @@ rna_stereo = keras.Model(
     inputs=[input_left, input_right], outputs=[img_rec, disp])
 
 rna_stereo.load_weights('demonstration/rna_stereo_CVN_REC_weigths_close')
-q = [*np.zeros(255)]
-y = [*range(255)]
+y = [*range(640)]
+q= [[0],[0],[0]]
 filters = np.ones((1, 4, 7, 1))/27.0
 init = tf.constant_initializer(filters)
 conv_mean = tf.keras.layers.Conv2D(
@@ -280,17 +281,13 @@ while (True):
     #disp_mean[0, :, :, 0]
     cv2.imshow('disp', colormapped_image)
     #cv2.imshow('rec', img_prev_batch[0, :, :, :])
-    m = disp_prev_batch.max()
-    q.insert(0, m)
+    m = disp_mean[0, :, :, 0].numpy().max(axis=0, keepdims=True)
+    q.insert(0, m[0])
     q.pop()
-    curve = np.column_stack((y, q))
+    curve = np.column_stack((y, np.mean(q, axis=0)))
     x = cv2.polylines(img, [curve.astype(np.int32)], False, (0, 255, 0))
     x = cv2.flip(x, -1)
     cv2.imshow("graph", x.astype(np.uint8))
-
-    display = cv2.putText(img, str(0.1*0.0028/m) + "m", org, font, fontScale,
-                          (255, 255, 255), thickness, cv2.LINE_AA)
-    cv2.imshow('Mostrador', display)
 
     if cv2.waitKey(1) & 0XFF == ord('q'):
         break
