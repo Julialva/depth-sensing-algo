@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 import os
 from tensorflow.keras.utils import load_img, img_to_array
 
-left_image_path = 'maua_pics/left'
-right_image_path = 'maua_pics/right'
+left_image_path = 'demonstration/ftsTest/left_batch'
+right_image_path = 'demonstration/ftsTest/right_batch'
 
 
 # Escolhe tipos de arquivos desejados
@@ -224,7 +224,7 @@ x2 = layers.Conv2DTranspose(
 x2 = layers.Conv2D(64, (conv_size, conv_size),
                    padding='same', activation='relu')(x2)
 x3 = layers.Conv2DTranspose(
-    32, (conv_size, conv_size), padding='same', activation='relu', strides=(2, 2))(x2)
+    32, (conv_size, conv_size), padding=    'same', activation='relu', strides=(2, 2))(x2)
 x3 = layers.Conv2D(32, (conv_size, conv_size),
                    padding='same', activation='relu')(x3)
 
@@ -247,11 +247,15 @@ rna_stereo = keras.Model(
     inputs=[input_left, input_right], outputs=[img_rec, disp])
 
 rna_stereo.load_weights('demonstration/rna_stereo_CVN_REC_weigths_close')
+from keras_visualizer import visualizer 
+rna_stereo.summary()
+#from keras.utils.vis_utils import plot_model
+#plot_model(rna_stereo, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
 q = [*np.zeros(10)]
-filters = np.ones((1, 7, 7, 1))/49.0
+filters = np.ones((1, 8, 14, 1))/112.0
 init = tf.constant_initializer(filters)
 conv_mean = tf.keras.layers.Conv2D(
-    1, (7, 7), padding='same', kernel_initializer=init, bias_initializer='zeros', trainable=False)
+    1, (8, 14), padding='same', kernel_initializer=init, bias_initializer='zeros', trainable=False)
 while True:
     print(1)
     for i in range(len(left_img_paths)):

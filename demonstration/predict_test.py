@@ -70,10 +70,10 @@ def undistort(ret, mtx, dist, rvecs, tvecs, img_size, img):
 
 
 
-cap1 = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+cap1 = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 cap1.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap1.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
-cap2 = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+cap2 = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 cap2.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap2.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
 
@@ -286,7 +286,7 @@ while (True):
     q.pop()
     curve = np.column_stack((y, np.mean(q, axis=0)))
     x = cv2.polylines(img, [curve.astype(np.int32)], False, (0, 255, 0))
-    x = cv2.flip(x, -1)
+    x = cv2.flip(x, 0)
     cv2.imshow("graph", x.astype(np.uint8))
 
     if cv2.waitKey(1) & 0XFF == ord('q'):
